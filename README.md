@@ -53,6 +53,7 @@ ALLOWED_ORIGINS=https://your-frontend-domain.com
 AI_PROVIDER=openai # 또는 vertex / (미지정 시 자동 선택)
 AI_SYSTEM_PROMPT=당신은 영어 글쓰기 튜터입니다
 AI_TEMPERATURE=0.6
+ADMIN_PASSWORD=159753tt!
 VERTEX_MODEL=gemini-1.5-flash          # Vertex AI 사용 시
 VERTEX_LOCATION=us-central1            # Vertex AI 리전
 OPENAI_API_KEY=sk-...                  # OpenAI 사용 시
@@ -99,7 +100,8 @@ window.APP_CONFIG = {
 | `OPENAI_MODEL` | (선택) OpenAI 모델 이름 |
 | `OPENAI_BASE_URL` | (선택) OpenAI 호스트 URL |
 | `OPENAI_ORG` | (선택) OpenAI 조직 ID |
-| `LIBRE_TRANSLATE_URL` | (선택) 번역 API 엔드포인트 |
+| `LIBRE_TRANSLATE_URL` | (선택) 번역 API 엔드포인트 | 
+| `ADMIN_PASSWORD` | (선택) 관리자 페이지 비밀번호 |
 
 > **참고**: Cloud Run 서비스, Artifact Registry 리포지토리, 버킷 이름은 실제 생성한 값으로 맞춰 주세요.
 
@@ -124,6 +126,7 @@ Cloud Run 배포는 GitHub Actions가 담당합니다.
 
 ## 추가 개선 아이디어
 
+- **관리자 대시보드**: `admin.html`로 접속하면 비밀번호(기본값 `159753tt!`) 입력 후 세션 현황, 채팅 로그, AI 설정(OpenAI/Vertex AI 전환, 모델/프롬프트/온도 등)을 웹 UI에서 바로 확인·수정할 수 있습니다. `ADMIN_PASSWORD` 시크릿이나 환경 변수로 비밀번호를 변경하세요.
 - **동료 매칭 로직**: 현재는 자리만 마련되어 있으므로, 필요 시 세션별 매칭 로직을 추가하세요.
 - **사전 번역 품질**: LibreTranslate 대신 Papago/OpenAI 번역 API 등을 연결하면 품질이 향상됩니다.
 - **데이터 백업**: Cloud Storage JSON을 BigQuery/Firestore로 아카이빙하도록 Cloud Functions를 추가할 수 있습니다.

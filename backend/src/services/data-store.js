@@ -12,7 +12,6 @@ const DEFAULT_ADMIN_CONFIG = {
     model: '',
     location: '',
     openai: {
-      apiKey: '',
       model: '',
       baseUrl: '',
       organization: ''

@@ -54,6 +54,7 @@ jobs:
           AI_PROVIDER=${{ secrets.AI_PROVIDER }}
           AI_SYSTEM_PROMPT=${{ secrets.AI_SYSTEM_PROMPT }}
           AI_TEMPERATURE=${{ secrets.AI_TEMPERATURE }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           VERTEX_MODEL=${{ secrets.VERTEX_MODEL }}
           VERTEX_LOCATION=${{ secrets.VERTEX_LOCATION }}
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}

@@ -42,6 +42,12 @@ export function createChatService(dataStore, aiResponder) {
     return dataStore.getChatMessages(sessionId, resolved, Number(lastTs || 0));
   }
 
+  async function getHistory(sessionId, channel = 'ai') {
+    if (!sessionId) throw createError(400, '세션 ID가 필요합니다.');
+    const resolved = resolveChannel(channel);
+    return dataStore.getChatHistory(sessionId, resolved);
+  }
+
   async function requestAiIfNeeded(sessionId, group, userMessage, context, metadata = {}) {
     if (!sessionId) throw createError(400, '세션 ID가 필요합니다.');
     if (!aiResponder) {
@@ -76,6 +82,7 @@ export function createChatService(dataStore, aiResponder) {
   return {
     postMessage,
     getMessages,
+     getChatHistory: getHistory,
     requestAiIfNeeded
   };
 }

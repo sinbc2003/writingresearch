@@ -9,6 +9,8 @@ import { createSessionService } from './services/session-service.js';
 import { createChatService } from './services/chat-service.js';
 import { createAiResponder } from './services/ai-responder.js';
 import { createDictionaryService } from './services/dictionary-service.js';
+import { createAdminService } from './services/admin-service.js';
+import { createAdminRouter } from './routes/admin.js';
 
 const app = express();
 
@@ -30,6 +32,8 @@ app.use(morgan('combined'));
 
 const dataStore = await createDataStore(config);
 const aiResponder = createAiResponder(config);
+const adminService = createAdminService({ config, dataStore, aiResponder });
+await adminService.initialize();
 const sessionService = createSessionService(dataStore);
 const chatService = createChatService(dataStore, aiResponder);
 const dictionaryService = createDictionaryService(config);
@@ -51,8 +55,11 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api', (req, res, next) => {
   if (req.path === '/health' || req.path === '/public-settings') return next();
+  if (req.path.startsWith('/admin')) return next();
   return requireApiKey(req, res, next);
 });
+
+app.use('/api/admin', createAdminRouter({ adminService, sessionService, chatService }));
 
 app.get('/api/public-settings', async (req, res, next) => {
   try {

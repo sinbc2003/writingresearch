@@ -1,4 +1,614 @@
 <!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WritingResearch 관리자</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 16px;
+      }
+      .container {
+        width: min(1200px, 100%);
+        background: rgba(15, 23, 42, 0.88);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 18px;
+        padding: 32px;
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+      }
+      h1, h2, h3 {
+        margin: 0;
+        color: #f8fafc;
+      }
+      h1 { font-size: 26px; margin-bottom: 20px; }
+      h2 { font-size: 20px; margin-bottom: 14px; }
+      h3 { font-size: 16px; margin-bottom: 8px; }
+      label { display: block; font-size: 13px; margin-bottom: 6px; color: #cbd5f5; font-weight: 600; }
+      input, textarea, select {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.6);
+        color: #e2e8f0;
+        font-size: 14px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+      }
+      textarea { min-height: 140px; resize: vertical; }
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      button.primary {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #f8fafc;
+      }
+      button.secondary {
+        background: rgba(148, 163, 184, 0.2);
+        color: #e2e8f0;
+      }
+      button.danger {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #f8fafc;
+      }
+      button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+      button:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25); }
+      .card {
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(15, 23, 42, 0.55);
+        padding: 20px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+      .grid {
+        display: grid;
+        gap: 20px;
+      }
+      .grid-2 {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+      .status-bar {
+        margin-bottom: 20px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(96, 165, 250, 0.15);
+        border: 1px solid rgba(96, 165, 250, 0.35);
+        font-size: 13px;
+        color: #bfdbfe;
+      }
+      .status-bar.error {
+        background: rgba(248, 113, 113, 0.18);
+        border-color: rgba(248, 113, 113, 0.35);
+        color: #fecaca;
+      }
+      .status-bar.success {
+        background: rgba(74, 222, 128, 0.18);
+        border-color: rgba(74, 222, 128, 0.35);
+        color: #bbf7d0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th, td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        text-align: left;
+      }
+      tr { cursor: pointer; }
+      tr:hover { background: rgba(59, 130, 246, 0.1); }
+      tr.active { background: rgba(37, 99, 235, 0.22); }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .badge.openai { background: rgba(37, 99, 235, 0.2); color: #bfdbfe; }
+      .badge.vertex { background: rgba(16, 185, 129, 0.18); color: #bbf7d0; }
+      .badge.disabled { background: rgba(100, 116, 139, 0.25); color: #cbd5f5; }
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-bottom: 16px;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0;
+        font-size: 13px;
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 12px;
+        padding: 14px;
+        max-height: 320px;
+        overflow-y: auto;
+      }
+      .flex {
+        display: flex;
+        gap: 20px;
+      }
+      .flex > * { flex: 1; }
+      .hidden { display: none !important; }
+      .muted { color: rgba(148, 163, 184, 0.7); font-size: 12px; }
+      @media (max-width: 960px) {
+        body { padding: 24px 10px; }
+        .container { padding: 24px; }
+        .flex { flex-direction: column; }
+      }
+    </style>
+    <script src="./app-config.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div id="statusBar" class="status-bar">관리자 비밀번호를 입력하세요.</div>
+
+      <div id="loginView">
+        <h1>WritingResearch 관리자 로그인</h1>
+        <div class="card" style="max-width: 420px; margin-top: 20px;">
+          <label for="adminPassword">관리자 비밀번호</label>
+          <input id="adminPassword" type="password" placeholder="관리자 비밀번호" />
+          <div style="margin-top: 16px; display: flex; gap: 10px;">
+            <button id="btnLogin" class="primary" type="button">로그인</button>
+            <button id="btnClearStored" class="secondary" type="button">저장된 토큰 삭제</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminView" class="hidden">
+        <div class="toolbar">
+          <button id="btnReloadSessions" class="secondary" type="button">세션 새로고침</button>
+          <button id="btnReloadConfig" class="secondary" type="button">설정 새로고침</button>
+          <button id="btnLogout" class="danger" type="button">로그아웃</button>
+        </div>
+
+        <section class="card" style="margin-bottom: 24px;">
+          <h2>AI 설정</h2>
+          <p class="muted" style="margin-bottom: 16px;">OpenAI 키 입력 시 자동으로 OpenAI가 사용되며, 비워두면 기존 키를 유지합니다.</p>
+          <div class="grid grid-2">
+            <div>
+              <label for="aiProvider">AI 제공자</label>
+              <select id="aiProvider">
+                <option value="auto">자동 선택</option>
+                <option value="openai">OpenAI</option>
+                <option value="vertex">Vertex AI</option>
+                <option value="none">비활성화</option>
+              </select>
+            </div>
+            <div>
+              <label for="aiTemperature">Temperature (0~1)</label>
+              <input id="aiTemperature" type="number" step="0.05" min="0" max="1" placeholder="0.6" />
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <label for="aiSystemPrompt">System Prompt</label>
+            <textarea id="aiSystemPrompt" placeholder="AI 기본 지침을 입력하세요."></textarea>
+          </div>
+
+          <div class="grid grid-2" style="margin-top: 20px;">
+            <div>
+              <h3>OpenAI</h3>
+              <label for="openaiModel">모델 이름</label>
+              <input id="openaiModel" type="text" placeholder="예: gpt-4o-mini" />
+              <label for="openaiBaseUrl" style="margin-top: 12px;">Base URL</label>
+              <input id="openaiBaseUrl" type="text" placeholder="https://api.openai.com/v1" />
+              <label for="openaiOrg" style="margin-top: 12px;">조직 ID</label>
+              <input id="openaiOrg" type="text" placeholder="Optional" />
+              <label for="openaiApiKey" style="margin-top: 12px;">새 API 키</label>
+              <input id="openaiApiKey" type="password" placeholder="새 키 입력 (비워두면 유지)" />
+              <button id="btnClearOpenAiKey" class="secondary" type="button" style="margin-top: 10px;">저장된 OpenAI 키 제거</button>
+            </div>
+            <div>
+              <h3>Vertex AI</h3>
+              <label for="vertexModel">모델 이름</label>
+              <input id="vertexModel" type="text" placeholder="예: gemini-1.5-flash" />
+              <label for="vertexLocation" style="margin-top: 12px;">리전</label>
+              <input id="vertexLocation" type="text" placeholder="예: us-central1" />
+              <div class="muted" style="margin-top: 16px;">Vertex AI를 사용하려면 Cloud Run 환경 변수에 서비스 계정 권한이 필요합니다.</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button id="btnSaveConfig" class="primary" type="button">설정 저장</button>
+          </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 24px;">
+          <div class="flex" style="align-items: flex-start; gap: 24px;">
+            <div style="flex: 1;">
+              <h2>세션 목록</h2>
+              <div class="muted" style="margin-bottom: 12px;">좌측 목록을 선택하면 상세 내용과 대화 로그를 확인할 수 있습니다.</div>
+              <div style="overflow-x: auto;">
+                <table id="sessionTable">
+                  <thead>
+                    <tr>
+                      <th>세션</th>
+                      <th>집단</th>
+                      <th>학생</th>
+                      <th>단계</th>
+                      <th>업데이트</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div style="flex: 1;">
+              <h2>세션 상세</h2>
+              <div id="sessionDetail" class="muted">세션을 선택하면 내용이 표시됩니다.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>대화 로그</h2>
+          <div class="grid grid-2" style="margin-top: 16px;">
+            <div>
+              <h3>AI 피드백</h3>
+              <pre id="aiChatLog">세션을 선택하세요.</pre>
+            </div>
+            <div>
+              <h3>동료 피드백</h3>
+              <pre id="peerChatLog">세션을 선택하세요.</pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        'use strict';
+
+        const APP = window.APP_CONFIG || { apiBaseUrl: '/api', apiKey: '' };
+        let authToken = window.localStorage.getItem('writingresearch_admin_token') || '';
+        let selectedSessionKey = '';
+        let clearOpenAiKey = false;
+
+        const $ = (id) => document.getElementById(id);
+
+        function normalizeBaseUrl(url){
+          if (!url) return `${window.location.origin}/api/`;
+          const trimmed = String(url).trim();
+          if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+          }
+          const prefixed = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+          const combined = `${window.location.origin}${prefixed}`;
+          return combined.endsWith('/') ? combined : `${combined}/`;
+        }
+
+        const API_BASE = new URL('admin/', normalizeBaseUrl(APP.apiBaseUrl || '/api')).toString();
+
+        function setStatus(message, type){
+          const bar = $('statusBar');
+          bar.textContent = message;
+          bar.className = `status-bar${type ? ' ' + type : ''}`;
+        }
+
+        async function apiRequest(path, { method = 'GET', body, requireAuth = true } = {}) {
+          const url = new URL(path, API_BASE).toString();
+          const headers = { 'Content-Type': 'application/json' };
+          if (requireAuth && authToken) headers['Authorization'] = `Bearer ${authToken}`;
+          const response = await fetch(url, {
+            method,
+            headers,
+            body: body ? JSON.stringify(body) : undefined
+          });
+          if (response.status === 204) return null;
+          const text = await response.text();
+          let payload = null;
+          if (text) {
+            try { payload = JSON.parse(text); } catch (err) { throw new Error('서버 응답을 해석하지 못했습니다.'); }
+          }
+          if (!response.ok) {
+            const error = new Error(payload?.error || payload?.message || response.statusText || '요청 실패');
+            error.status = response.status;
+            throw error;
+          }
+          return payload;
+        }
+
+        function showLogin(){
+          $('loginView').classList.remove('hidden');
+          $('adminView').classList.add('hidden');
+          setStatus('관리자 비밀번호를 입력하세요.', '');
+        }
+
+        function showAdmin(){
+          $('loginView').classList.add('hidden');
+          $('adminView').classList.remove('hidden');
+          setStatus('관리자 모드에 접속했습니다.', 'success');
+        }
+
+        async function attemptAutoLogin(){
+          if (!authToken) return false;
+          try {
+            await loadConfig();
+            await loadSessions();
+            showAdmin();
+            return true;
+          } catch (error) {
+            authToken = '';
+            window.localStorage.removeItem('writingresearch_admin_token');
+            showLogin();
+            return false;
+          }
+        }
+
+        async function login(){
+          const password = $('adminPassword').value.trim();
+          if (!password) {
+            setStatus('비밀번호를 입력하세요.', 'error');
+            return;
+          }
+          $('btnLogin').disabled = true;
+          try {
+            const payload = await apiRequest('login', { method: 'POST', body: { password }, requireAuth: false });
+            authToken = payload?.token || '';
+            if (!authToken) throw new Error('토큰을 수신하지 못했습니다.');
+            window.localStorage.setItem('writingresearch_admin_token', authToken);
+            $('adminPassword').value = '';
+            await loadConfig();
+            await loadSessions();
+            showAdmin();
+          } catch (error) {
+            setStatus(error.message || '로그인에 실패했습니다.', 'error');
+          } finally {
+            $('btnLogin').disabled = false;
+          }
+        }
+
+        async function logout(){
+          try {
+            await apiRequest('logout', { method: 'POST' });
+          } catch (error) {
+            console.warn(error);
+          }
+          authToken = '';
+          window.localStorage.removeItem('writingresearch_admin_token');
+          $('adminPassword').value = '';
+          $('sessionTable').querySelector('tbody').innerHTML = '';
+          $('sessionDetail').textContent = '세션을 선택하면 내용이 표시됩니다.';
+          $('aiChatLog').textContent = '세션을 선택하세요.';
+          $('peerChatLog').textContent = '세션을 선택하세요.';
+          clearOpenAiKey = false;
+          showLogin();
+        }
+
+        async function loadConfig(){
+          const data = await apiRequest('config');
+          const ai = data?.ai || {};
+          const overrides = data?.overrides || {};
+          $('aiProvider').value = overrides.provider || 'auto';
+          $('aiTemperature').value = overrides.temperature ?? '';
+          $('aiSystemPrompt').value = overrides.systemPrompt || '';
+          $('openaiModel').value = overrides.openai?.model || ai.openai?.model || '';
+          $('openaiBaseUrl').value = overrides.openai?.baseUrl || ai.openai?.baseUrl || '';
+          $('openaiOrg').value = overrides.openai?.organization || ai.openai?.organization || '';
+          $('vertexModel').value = overrides.vertex?.model || ai.vertex?.model || '';
+          $('vertexLocation').value = overrides.vertex?.location || ai.vertex?.location || '';
+          $('openaiApiKey').value = '';
+          clearOpenAiKey = false;
+
+          const badge = document.createElement('span');
+          badge.className = `badge ${ai.provider === 'openai' ? 'openai' : ai.provider === 'vertex' ? 'vertex' : 'disabled'}`;
+          badge.textContent = ai.provider === 'openai' ? 'OpenAI 사용 중' : ai.provider === 'vertex' ? 'Vertex AI 사용 중' : 'AI 비활성화';
+          const statusContainer = document.createElement('div');
+          statusContainer.className = 'ai-status';
+          statusContainer.appendChild(badge);
+          const configSection = $('adminView').querySelector('section.card');
+          const previousStatus = configSection.querySelector('.ai-status');
+          if (previousStatus) previousStatus.remove();
+          configSection.insertBefore(statusContainer, configSection.children[1]);
+        }
+
+        async function saveConfig(){
+          const provider = $('aiProvider').value;
+          const temperatureValue = $('aiTemperature').value;
+          const systemPrompt = $('aiSystemPrompt').value;
+          const payload = {
+            provider,
+            temperature: temperatureValue === '' ? null : Number(temperatureValue),
+            systemPrompt,
+            openai: {
+              model: $('openaiModel').value,
+              baseUrl: $('openaiBaseUrl').value,
+              organization: $('openaiOrg').value
+            },
+            vertex: {
+              model: $('vertexModel').value,
+              location: $('vertexLocation').value
+            }
+          };
+
+          const apiKeyInput = $('openaiApiKey').value;
+          if (clearOpenAiKey) {
+            payload.openai.apiKey = null;
+          } else if (apiKeyInput && apiKeyInput.trim()) {
+            payload.openai.apiKey = apiKeyInput.trim();
+          }
+
+          $('btnSaveConfig').disabled = true;
+          try {
+            await apiRequest('config', { method: 'POST', body: payload });
+            $('openaiApiKey').value = '';
+            clearOpenAiKey = false;
+            setStatus('AI 설정이 저장되었습니다.', 'success');
+            await loadConfig();
+          } catch (error) {
+            setStatus(error.message || '설정 저장에 실패했습니다.', 'error');
+          } finally {
+            $('btnSaveConfig').disabled = false;
+          }
+        }
+
+        async function loadSessions(){
+          const data = await apiRequest('sessions');
+          const list = data?.sessions || [];
+          const tbody = $('sessionTable').querySelector('tbody');
+          tbody.innerHTML = '';
+          if (!list.length) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = 5;
+            cell.className = 'muted';
+            cell.textContent = '등록된 세션이 없습니다.';
+            row.appendChild(cell);
+            tbody.appendChild(row);
+            return;
+          }
+          list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+          list.forEach((item) => {
+            const row = document.createElement('tr');
+            row.dataset.sessionKey = item.sessionKey;
+            if (item.sessionKey === selectedSessionKey) row.classList.add('active');
+            const stageLabel = `단계 ${item.stage || 1}`;
+            const updated = item.updatedAt ? new Date(item.updatedAt).toLocaleString('ko-KR') : '-';
+            row.innerHTML = `
+              <td>${item.sessionKey}</td>
+              <td>${item.group || '-'}</td>
+              <td>${item.user?.name || ''} (${item.user?.id || ''})</td>
+              <td>${stageLabel}</td>
+              <td>${updated}</td>
+            `;
+            row.addEventListener('click', () => selectSession(item.sessionKey));
+            tbody.appendChild(row);
+          });
+        }
+
+        async function selectSession(sessionKey){
+          selectedSessionKey = sessionKey;
+          const rows = $('sessionTable').querySelectorAll('tbody tr');
+          rows.forEach((row) => {
+            row.classList.toggle('active', row.dataset.sessionKey === sessionKey);
+          });
+          setStatus(`세션 ${sessionKey} 상세 정보를 불러오는 중입니다.`, '');
+          try {
+            const [{ session }, aiChats, peerChats] = await Promise.all([
+              apiRequest(`sessions/${sessionKey}`),
+              apiRequest(`sessions/${sessionKey}/chats/ai`),
+              apiRequest(`sessions/${sessionKey}/chats/peer`)
+            ]);
+            renderSessionDetail(session);
+            renderChatLogs(aiChats?.messages || [], peerChats?.messages || []);
+            setStatus(`세션 ${sessionKey} 상세 정보를 불러왔습니다.`, 'success');
+          } catch (error) {
+            setStatus(error.message || '세션 정보를 불러오지 못했습니다.', 'error');
+          }
+        }
+
+        function renderSessionDetail(session){
+          if (!session) {
+            $('sessionDetail').textContent = '세션 데이터를 찾을 수 없습니다.';
+            return;
+          }
+          const lines = [];
+          lines.push(`세션 키: ${session.sessionKey}`);
+          lines.push(`집단: ${session.mode}`);
+          lines.push(`학생: ${session.you?.name || ''} (${session.you?.id || ''})`);
+          lines.push(`현재 단계: ${session.stage}`);
+          lines.push(`생성 시각: ${session.createdAt ? new Date(session.createdAt).toLocaleString('ko-KR') : '정보 없음'}`);
+          lines.push(`최근 업데이트: ${session.updatedAt ? new Date(session.updatedAt).toLocaleString('ko-KR') : '정보 없음'}`);
+          lines.push('');
+          lines.push('사전 글쓰기 제출 시간: ' + (session.writing?.prewriting?.submittedAt ? new Date(session.writing.prewriting.submittedAt).toLocaleString('ko-KR') : '미제출'));
+          lines.push('2단계 메모 저장 시간: ' + (session.writing?.draft?.savedAt ? new Date(session.writing.draft.savedAt).toLocaleString('ko-KR') : '미저장'));
+          lines.push('3단계 메모 저장 시간: ' + (session.writing?.notes?.updatedAt ? new Date(session.writing.notes.updatedAt).toLocaleString('ko-KR') : '미저장'));
+          lines.push('최종 글 제출 시간: ' + (session.writing?.final?.submittedAt ? new Date(session.writing.final.submittedAt).toLocaleString('ko-KR') : '미제출'));
+          lines.push('');
+          lines.push('사전 글쓰기:');
+          lines.push(session.writing?.prewriting?.text || '(내용 없음)');
+          lines.push('');
+          lines.push('2단계 메모:');
+          lines.push(session.writing?.draft?.text || '(내용 없음)');
+          lines.push('');
+          lines.push('3단계 메모:');
+          lines.push(session.writing?.notes?.text || '(내용 없음)');
+          lines.push('');
+          lines.push('최종 글:');
+          lines.push(session.writing?.final?.text || '(내용 없음)');
+          $('sessionDetail').innerHTML = `<pre>${lines.join('\n')}</pre>`;
+        }
+
+        function renderChatLogs(aiMessages, peerMessages){
+          const format = (list) => {
+            if (!list.length) return '대화 기록이 없습니다.';
+            return list
+              .map((msg) => {
+                const time = msg.ts ? new Date(msg.ts).toLocaleString('ko-KR') : '';
+                const name = msg.senderName || msg.role || '사용자';
+                return `[${time}] ${name}:\n${msg.text || ''}`;
+              })
+              .join('\n\n');
+          };
+          $('aiChatLog').textContent = format(aiMessages);
+          $('peerChatLog').textContent = format(peerMessages);
+        }
+
+        $('btnLogin').addEventListener('click', login);
+        $('btnClearStored').addEventListener('click', () => {
+          window.localStorage.removeItem('writingresearch_admin_token');
+          authToken = '';
+          setStatus('저장된 토큰을 삭제했습니다.', 'success');
+        });
+        $('btnLogout').addEventListener('click', logout);
+        $('btnReloadSessions').addEventListener('click', async () => {
+          try {
+            await loadSessions();
+            setStatus('세션 목록을 새로고침했습니다.', 'success');
+          } catch (error) {
+            setStatus(error.message || '세션 목록을 불러오지 못했습니다.', 'error');
+          }
+        });
+        $('btnReloadConfig').addEventListener('click', async () => {
+          try {
+            await loadConfig();
+            setStatus('AI 설정을 새로고침했습니다.', 'success');
+          } catch (error) {
+            setStatus(error.message || 'AI 설정을 불러오지 못했습니다.', 'error');
+          }
+        });
+        $('btnSaveConfig').addEventListener('click', saveConfig);
+        $('btnClearOpenAiKey').addEventListener('click', () => {
+          clearOpenAiKey = true;
+          $('openaiApiKey').value = '';
+          setStatus('OpenAI 키를 삭제하도록 설정했습니다. 저장을 눌러 반영하세요.', '');
+        });
+
+        attemptAutoLogin();
+      })();
+    </script>
+  </body>
+</html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
