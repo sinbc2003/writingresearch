@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import createError from 'http-errors';
+import path from 'node:path';
 
 import config from './config.js';
 import { createDataStore } from './services/data-store.js';
@@ -37,6 +38,7 @@ await adminService.initialize();
 const sessionService = createSessionService(dataStore);
 const chatService = createChatService(dataStore, aiResponder);
 const dictionaryService = createDictionaryService(config);
+const PUBLIC_DIR = path.resolve(process.cwd(), 'public');
 
 function requireApiKey(req, res, next) {
   if (!config.apiKey) return next();
@@ -220,6 +222,16 @@ app.get('/api/dictionary', async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+app.use(express.static(PUBLIC_DIR));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
 });
 
 app.use((req, res, next) => {

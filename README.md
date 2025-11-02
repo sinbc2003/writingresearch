@@ -111,6 +111,7 @@ window.APP_CONFIG = {
 2. GitHub Actions가 Docker 이미지를 Artifact Registry에 푸시합니다.
 3. 동일 워크플로에서 Cloud Run 서비스에 새 이미지를 배포하고 환경 변수를 업데이트합니다.
 4. 프론트엔드 `app-config.js`의 `apiBaseUrl`을 Cloud Run 주소로 맞추면 서비스가 동작합니다.
+5. Cloud Run 서비스 URL(예: `https://writingresearch-api-711739369323.asia-northeast3.run.app/`)로 접속하면 `index.html`이 자동으로 서빙되며, `https://.../admin`에서는 관리자 대시보드를 이용할 수 있습니다.
 
 ### 수동 실행 커맨드 (요청하신 포맷)
 
