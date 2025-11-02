@@ -126,7 +126,8 @@ export function createSessionService(dataStore) {
           draftSavedAt: Number(session.writing?.draft?.savedAt || 0),
           notesUpdatedAt: Number(session.writing?.notes?.updatedAt || 0),
           finalSubmittedAt: Number(session.writing?.final?.submittedAt || 0)
-        }
+        },
+        partner: session.partner || null
       }));
   }
 
@@ -180,6 +181,40 @@ export function createSessionService(dataStore) {
       session.writing.final = { text: cleaned, submittedAt };
       session.steps.final = { submitted: true, submittedAt };
       session.stage = 4;
+      return session;
+    });
+  }
+
+  async function setPartner(sessionKey, payload = {}) {
+    const { partnerSessionKey, partnerName, partnerId } = payload;
+    return dataStore.updateSession(sessionKey, async (session) => {
+      const info = {};
+      if (partnerSessionKey) {
+        const partnerSession = await dataStore.getSession(partnerSessionKey);
+        if (!partnerSession) {
+          throw createError(404, '동료 세션을 찾을 수 없습니다.');
+        }
+        info.sessionKey = partnerSession.sessionKey;
+        info.name = partnerSession.you?.name || '';
+        info.id = partnerSession.you?.id || '';
+      }
+      if (typeof partnerName === 'string' && partnerName.trim()) {
+        info.name = partnerName.trim();
+      }
+      if (typeof partnerId === 'string' && partnerId.trim()) {
+        info.id = partnerId.trim();
+      }
+      if (!info.sessionKey && !info.name && !info.id) {
+        throw createError(400, '동료 정보를 입력하세요.');
+      }
+      session.partner = info;
+      return session;
+    });
+  }
+
+  async function clearPartner(sessionKey) {
+    return dataStore.updateSession(sessionKey, (session) => {
+      session.partner = null;
       return session;
     });
   }
@@ -253,6 +288,8 @@ export function createSessionService(dataStore) {
     saveDraft,
     savePeerNotes,
     submitFinalWriting,
+    setPartner,
+    clearPartner,
     advanceToPeerStage,
     advanceToFinalStage,
     regressStage,

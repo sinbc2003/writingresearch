@@ -79,6 +79,7 @@
         padding: 20px;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
       }
+      .card + .card { margin-top: 24px; }
       .grid {
         display: grid;
         gap: 20px;
@@ -130,6 +131,8 @@
       .badge.openai { background: rgba(37, 99, 235, 0.2); color: #bfdbfe; }
       .badge.vertex { background: rgba(16, 185, 129, 0.18); color: #bbf7d0; }
       .badge.disabled { background: #e2e8f0; color: #475569; }
+      .badge.stage { background: #dbeafe; color: #1d4ed8; }
+      .badge.group { background: #fee2e2; color: #b91c1c; }
       .toolbar {
         display: flex;
         gap: 10px;
@@ -148,11 +151,97 @@
         max-height: 320px;
         overflow-y: auto;
       }
-      .flex {
-        display: flex;
-        gap: 20px;
+      .match-form {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        align-items: end;
       }
-      .flex > * { flex: 1; }
+      .match-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .detail-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .detail-id {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .detail-id strong { font-size: 18px; color: #0f172a; }
+      .detail-label {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .detail-info-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        margin-top: 16px;
+      }
+      .detail-info-grid p { margin: 4px 0 0; }
+      .detail-partner-block {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 20px;
+      }
+      .detail-partner-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .match-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .link-button {
+        background: none;
+        border: none;
+        color: #2563eb;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 8px;
+      }
+      .link-button:hover {
+        background: rgba(37, 99, 235, 0.12);
+      }
+      .stage-list {
+        display: grid;
+        gap: 16px;
+        margin-top: 24px;
+      }
+      .stage-block {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+      }
+      .stage-title {
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: #0f172a;
+      }
+      .stage-meta {
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 10px;
+      }
+      #sessionDetail pre { margin: 0; }
       .hidden { display: none !important; }
       .muted { color: #64748b; font-size: 12px; }
       @media (max-width: 960px) {
@@ -179,6 +268,8 @@
         </div>
       </div>
 
+      <datalist id="sessionOptions"></datalist>
+
       <div id="adminView" class="hidden">
         <div class="toolbar">
           <button id="btnReloadSessions" class="secondary" type="button">세션 새로고침</button>
@@ -186,7 +277,7 @@
           <button id="btnLogout" class="danger" type="button">로그아웃</button>
         </div>
 
-        <section class="card" style="margin-bottom: 24px;">
+        <section class="card">
           <h2>AI 설정</h2>
           <p class="muted" style="margin-bottom: 16px;">OpenAI 키 입력 시 자동으로 OpenAI가 사용되며, 비워두면 기존 키를 유지합니다.</p>
           <div class="grid grid-2">
@@ -237,34 +328,56 @@
           </div>
         </section>
 
-        <section class="card" style="margin-bottom: 24px;">
-          <div class="flex" style="align-items: flex-start; gap: 24px;">
-            <div style="flex: 1;">
-              <h2>세션 목록</h2>
-              <div class="muted" style="margin-bottom: 12px;">좌측 목록을 선택하면 상세 내용과 대화 로그를 확인할 수 있습니다.</div>
-              <div style="overflow-x: auto;">
-                <table id="sessionTable">
-                  <thead>
-                    <tr>
-                      <th>세션</th>
-                      <th>집단</th>
-                      <th>학생</th>
-                      <th>단계</th>
-                      <th>업데이트</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
-              </div>
+        <section class="card hidden" id="partnerSection">
+          <h2>동료 매칭</h2>
+          <p class="muted" style="margin-bottom: 12px;">세션을 선택한 후 동료의 세션 키를 지정하거나 이름/식별 번호를 직접 입력해 매칭하세요.</p>
+          <div class="match-form">
+            <div>
+              <label for="partnerSessionInput">동료 세션 키</label>
+              <input list="sessionOptions" id="partnerSessionInput" placeholder="세션 키 또는 직접 입력" />
             </div>
-            <div style="flex: 1;">
-              <h2>세션 상세</h2>
-              <div id="sessionDetail" class="muted">세션을 선택하면 내용이 표시됩니다.</div>
+            <div>
+              <label for="partnerNameInput">동료 이름</label>
+              <input id="partnerNameInput" type="text" placeholder="자동 입력 또는 직접 입력" />
             </div>
+            <div>
+              <label for="partnerIdInput">동료 식별번호</label>
+              <input id="partnerIdInput" type="text" placeholder="자동 입력 또는 직접 입력" />
+            </div>
+          </div>
+          <div class="match-actions" style="margin-top: 16px;">
+            <button id="btnAssignPartner" class="primary" type="button" disabled>동료 저장</button>
+            <button id="btnClearPartner" class="secondary" type="button" disabled>동료 연결 해제</button>
+            <button id="btnJumpPartner" class="link-button" type="button" disabled>동료 세션 열기</button>
           </div>
         </section>
 
-        <section class="card">
+        <section class="card" id="sessionListSection">
+          <h2>세션 목록</h2>
+          <div class="muted" style="margin-bottom: 12px;">목록에서 세션을 선택하면 상세 정보와 대화 로그를 확인하고 동료를 매칭할 수 있습니다.</div>
+          <div style="overflow-x: auto;">
+            <table id="sessionTable">
+              <thead>
+                <tr>
+                  <th>세션</th>
+                  <th>집단</th>
+                  <th>학생</th>
+                  <th>단계</th>
+                  <th>동료</th>
+                  <th>업데이트</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card hidden" id="sessionDetailSection">
+          <h2>세션 상세</h2>
+          <div id="sessionDetail" class="muted">세션을 선택하면 내용이 표시됩니다.</div>
+        </section>
+
+        <section class="card hidden" id="chatSection">
           <h2>대화 로그</h2>
           <div class="grid grid-2" style="margin-top: 16px;">
             <div>
@@ -288,7 +401,9 @@
         let authToken = window.localStorage.getItem('writingresearch_admin_token') || '';
         let selectedSessionKey = '';
         let clearOpenAiKey = false;
+        let currentSessionDetail = null;
 
+        const sessionCache = new Map();
         const $ = (id) => document.getElementById(id);
 
         function normalizeBaseUrl(url){
@@ -392,10 +507,10 @@
           authToken = '';
           window.localStorage.removeItem('writingresearch_admin_token');
           $('adminPassword').value = '';
+          sessionCache.clear();
+          currentSessionDetail = null;
           $('sessionTable').querySelector('tbody').innerHTML = '';
-          $('sessionDetail').textContent = '세션을 선택하면 내용이 표시됩니다.';
-          $('aiChatLog').textContent = '세션을 선택하세요.';
-          $('peerChatLog').textContent = '세션을 선택하세요.';
+          resetDetailPanels();
           clearOpenAiKey = false;
           showLogin();
         }
@@ -471,29 +586,44 @@
           const data = await apiRequest('sessions');
           const list = data?.sessions || [];
           const tbody = $('sessionTable').querySelector('tbody');
+          const optionList = $('sessionOptions');
           tbody.innerHTML = '';
+          optionList.innerHTML = '';
+          sessionCache.clear();
+
           if (!list.length) {
+            resetDetailPanels();
             const row = document.createElement('tr');
             const cell = document.createElement('td');
-            cell.colSpan = 5;
+            cell.colSpan = 6;
             cell.className = 'muted';
             cell.textContent = '등록된 세션이 없습니다.';
             row.appendChild(cell);
             tbody.appendChild(row);
             return;
           }
+
           list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
           list.forEach((item) => {
+            sessionCache.set(item.sessionKey, item);
+            const option = document.createElement('option');
+            option.value = item.sessionKey;
+            const studentLabel = `${item.user?.name || ''} ${item.user?.id ? `(${item.user.id})` : ''}`.trim();
+            option.label = `${item.sessionKey} · ${studentLabel || '학생 정보 없음'}`;
+            optionList.appendChild(option);
+
             const row = document.createElement('tr');
             row.dataset.sessionKey = item.sessionKey;
             if (item.sessionKey === selectedSessionKey) row.classList.add('active');
             const stageLabel = `단계 ${item.stage || 1}`;
-            const updated = item.updatedAt ? new Date(item.updatedAt).toLocaleString('ko-KR') : '-';
+            const updated = item.updatedAt ? formatDateTime(item.updatedAt) : '-';
+            const partnerLabel = formatPartnerCell(item.partner);
             row.innerHTML = `
               <td>${item.sessionKey}</td>
               <td>${item.group || '-'}</td>
-              <td>${item.user?.name || ''} (${item.user?.id || ''})</td>
+              <td>${escapeHtml(item.user?.name || '')} ${item.user?.id ? `(${escapeHtml(item.user.id)})` : ''}</td>
               <td>${stageLabel}</td>
+              <td>${partnerLabel}</td>
               <td>${updated}</td>
             `;
             row.addEventListener('click', () => selectSession(item.sessionKey));
@@ -514,7 +644,18 @@
               apiRequest(`sessions/${sessionKey}/chats/ai`),
               apiRequest(`sessions/${sessionKey}/chats/peer`)
             ]);
+            currentSessionDetail = session;
+            sessionCache.set(session.sessionKey, {
+              ...(sessionCache.get(session.sessionKey) || {}),
+              partner: session.partner,
+              user: session.you,
+              group: session.mode,
+              stage: session.stage,
+              updatedAt: session.updatedAt
+            });
+            showDetailPanels();
             renderSessionDetail(session);
+            populatePartnerForm(session);
             renderChatLogs(aiChats?.messages || [], peerChats?.messages || []);
             setStatus(`세션 ${sessionKey} 상세 정보를 불러왔습니다.`, 'success');
           } catch (error) {
@@ -523,35 +664,39 @@
         }
 
         function renderSessionDetail(session){
+          const container = $('sessionDetail');
           if (!session) {
-            $('sessionDetail').textContent = '세션 데이터를 찾을 수 없습니다.';
+            container.textContent = '세션 데이터를 찾을 수 없습니다.';
             return;
           }
-          const lines = [];
-          lines.push(`세션 키: ${session.sessionKey}`);
-          lines.push(`집단: ${session.mode}`);
-          lines.push(`학생: ${session.you?.name || ''} (${session.you?.id || ''})`);
-          lines.push(`현재 단계: ${session.stage}`);
-          lines.push(`생성 시각: ${session.createdAt ? new Date(session.createdAt).toLocaleString('ko-KR') : '정보 없음'}`);
-          lines.push(`최근 업데이트: ${session.updatedAt ? new Date(session.updatedAt).toLocaleString('ko-KR') : '정보 없음'}`);
-          lines.push('');
-          lines.push('사전 글쓰기 제출 시간: ' + (session.writing?.prewriting?.submittedAt ? new Date(session.writing.prewriting.submittedAt).toLocaleString('ko-KR') : '미제출'));
-          lines.push('2단계 메모 저장 시간: ' + (session.writing?.draft?.savedAt ? new Date(session.writing.draft.savedAt).toLocaleString('ko-KR') : '미저장'));
-          lines.push('3단계 메모 저장 시간: ' + (session.writing?.notes?.updatedAt ? new Date(session.writing.notes.updatedAt).toLocaleString('ko-KR') : '미저장'));
-          lines.push('최종 글 제출 시간: ' + (session.writing?.final?.submittedAt ? new Date(session.writing.final.submittedAt).toLocaleString('ko-KR') : '미제출'));
-          lines.push('');
-          lines.push('사전 글쓰기:');
-          lines.push(session.writing?.prewriting?.text || '(내용 없음)');
-          lines.push('');
-          lines.push('2단계 메모:');
-          lines.push(session.writing?.draft?.text || '(내용 없음)');
-          lines.push('');
-          lines.push('3단계 메모:');
-          lines.push(session.writing?.notes?.text || '(내용 없음)');
-          lines.push('');
-          lines.push('최종 글:');
-          lines.push(session.writing?.final?.text || '(내용 없음)');
-          $('sessionDetail').innerHTML = `<pre>${lines.join('\n')}</pre>`;
+          const updatedAt = session.updatedAt ? formatDateTime(session.updatedAt) : '정보 없음';
+          const createdAt = session.createdAt ? formatDateTime(session.createdAt) : '정보 없음';
+          const studentName = escapeHtml(session.you?.name || '이름 없음');
+          const studentId = escapeHtml(session.you?.id || '-');
+          const partnerInfo = session.partner ? formatPartnerDetail(session.partner) : '';
+
+          const stageBlocks = buildStageBlocks(session).join('');
+
+          container.innerHTML = `
+            <div class="detail-heading">
+              <div class="detail-id">
+                <strong>${studentName}</strong>
+                <span class="badge group">${escapeHtml(session.mode || '-')} 집단</span>
+                <span class="badge stage">단계 ${session.stage || 1}</span>
+              </div>
+              <div class="muted">최근 업데이트 · ${updatedAt}</div>
+            </div>
+            <div class="detail-info-grid">
+              <div><span class="detail-label">세션 키</span><p>${escapeHtml(session.sessionKey)}</p></div>
+              <div><span class="detail-label">식별 번호</span><p>${studentId}</p></div>
+              <div><span class="detail-label">생성 시간</span><p>${createdAt}</p></div>
+              <div><span class="detail-label">AI 세션</span><p>${escapeHtml(session.aiSessionId || '-')}</p></div>
+            </div>
+            ${partnerInfo}
+            <div class="stage-list">
+              ${stageBlocks}
+            </div>
+          `;
         }
 
         function renderChatLogs(aiMessages, peerMessages){
@@ -559,7 +704,7 @@
             if (!list.length) return '대화 기록이 없습니다.';
             return list
               .map((msg) => {
-                const time = msg.ts ? new Date(msg.ts).toLocaleString('ko-KR') : '';
+                const time = msg.ts ? formatDateTime(msg.ts) : '';
                 const name = msg.senderName || msg.role || '사용자';
                 return `[${time}] ${name}:\n${msg.text || ''}`;
               })
@@ -598,6 +743,218 @@
           $('openaiApiKey').value = '';
           setStatus('OpenAI 키를 삭제하도록 설정했습니다. 저장을 눌러 반영하세요.', '');
         });
+
+        $('partnerSessionInput').addEventListener('change', handlePartnerSessionSelect);
+        ['partnerSessionInput', 'partnerNameInput', 'partnerIdInput'].forEach((id) => {
+          $(id).addEventListener('input', handlePartnerFormChange);
+        });
+        $('btnAssignPartner').addEventListener('click', assignPartner);
+        $('btnClearPartner').addEventListener('click', clearPartner);
+        $('btnJumpPartner').addEventListener('click', jumpToPartner);
+
+        attemptAutoLogin();
+        function resetDetailPanels(){
+          $('sessionDetailSection').classList.add('hidden');
+          $('chatSection').classList.add('hidden');
+          $('partnerSection').classList.add('hidden');
+          $('sessionDetail').textContent = '세션을 선택하면 내용이 표시됩니다.';
+          $('aiChatLog').textContent = '세션을 선택하세요.';
+          $('peerChatLog').textContent = '세션을 선택하세요.';
+          $('partnerSessionInput').value = '';
+          $('partnerNameInput').value = '';
+          $('partnerIdInput').value = '';
+          $('btnAssignPartner').disabled = true;
+          $('btnClearPartner').disabled = true;
+          $('btnJumpPartner').disabled = true;
+          $('btnJumpPartner').dataset.sessionKey = '';
+        }
+
+        function showDetailPanels(){
+          $('sessionDetailSection').classList.remove('hidden');
+          $('chatSection').classList.remove('hidden');
+          $('partnerSection').classList.remove('hidden');
+        }
+
+        function formatPartnerCell(partner){
+          if (!partner) return '<span class="muted">-</span>';
+          const name = escapeHtml(partner.name || '이름 없음');
+          const id = escapeHtml(partner.id || '');
+          const sessionKey = escapeHtml(partner.sessionKey || '');
+          const parts = [name];
+          if (id) parts.push(`(${id})`);
+          if (sessionKey) parts.push(`<br/><span class="muted">${sessionKey}</span>`);
+          return parts.join(' ');
+        }
+
+        function formatPartnerDetail(partner){
+          const name = escapeHtml(partner.name || '미지정');
+          const id = escapeHtml(partner.id || '-');
+          const sessionKey = escapeHtml(partner.sessionKey || '-');
+          return `
+            <div class="detail-partner-block">
+              <div class="detail-partner-header">
+                <div>
+                  <span class="detail-label">동료 매칭</span>
+                  <p style="margin: 4px 0 0; font-weight: 600;">${name}</p>
+                </div>
+                <span class="muted">세션 키 · ${sessionKey}</span>
+              </div>
+              <div class="muted">식별 번호 · ${id}</div>
+            </div>
+          `;
+        }
+
+        function buildStageBlocks(session){
+          const list = [];
+          const stages = [
+            {
+              title: '1단계 · 사전 글쓰기',
+              meta: session.writing?.prewriting?.submittedAt ? `제출 시간 · ${formatDateTime(session.writing.prewriting.submittedAt)}` : '제출되지 않았습니다.',
+              text: session.writing?.prewriting?.text,
+              empty: '사전 글쓰기가 작성되지 않았습니다.'
+            },
+            {
+              title: '2단계 · 수정 아이디어 메모',
+              meta: session.writing?.draft?.savedAt ? `저장 시간 · ${formatDateTime(session.writing.draft.savedAt)}` : '저장된 메모가 없습니다.',
+              text: session.writing?.draft?.text,
+              empty: '2단계 메모가 작성되지 않았습니다.'
+            },
+            {
+              title: '3단계 · 동료 피드백 메모',
+              meta: session.writing?.notes?.updatedAt ? `저장 시간 · ${formatDateTime(session.writing.notes.updatedAt)}` : '작성된 동료 피드백 메모가 없습니다.',
+              text: session.writing?.notes?.text,
+              empty: '3단계 메모가 작성되지 않았습니다.'
+            },
+            {
+              title: '4단계 · 최종 글',
+              meta: session.writing?.final?.submittedAt ? `제출 시간 · ${formatDateTime(session.writing.final.submittedAt)}` : '최종 글이 아직 제출되지 않았습니다.',
+              text: session.writing?.final?.text,
+              empty: '최종 글이 아직 작성되지 않았습니다.'
+            }
+          ];
+
+          stages.forEach((stage) => {
+            const content = stage.text ? escapeHtml(stage.text) : `<span class="muted">${stage.empty}</span>`;
+            list.push(`
+              <div class="stage-block">
+                <div class="stage-title">${stage.title}</div>
+                <div class="stage-meta">${stage.meta}</div>
+                <pre>${content}</pre>
+              </div>
+            `);
+          });
+          return list;
+        }
+
+        function populatePartnerForm(session){
+          const assignBtn = $('btnAssignPartner');
+          const clearBtn = $('btnClearPartner');
+          const jumpBtn = $('btnJumpPartner');
+          const sessionInput = $('partnerSessionInput');
+          const nameInput = $('partnerNameInput');
+          const idInput = $('partnerIdInput');
+
+          if (!session) {
+            assignBtn.disabled = true;
+            clearBtn.disabled = true;
+            jumpBtn.disabled = true;
+            jumpBtn.dataset.sessionKey = '';
+            sessionInput.value = '';
+            nameInput.value = '';
+            idInput.value = '';
+            return;
+          }
+
+          const partner = session.partner || null;
+          sessionInput.value = partner?.sessionKey || '';
+          nameInput.value = partner?.name || '';
+          idInput.value = partner?.id || '';
+          assignBtn.disabled = true;
+          clearBtn.disabled = !partner;
+          jumpBtn.disabled = !partner?.sessionKey;
+          jumpBtn.dataset.sessionKey = partner?.sessionKey || '';
+        }
+
+        function handlePartnerSessionSelect(){
+          const key = $('partnerSessionInput').value.trim();
+          if (!key) return;
+          const info = sessionCache.get(key);
+          if (!info) return;
+          if (!$('partnerNameInput').value) $('partnerNameInput').value = info.user?.name || '';
+          if (!$('partnerIdInput').value) $('partnerIdInput').value = info.user?.id || '';
+          handlePartnerFormChange();
+        }
+
+        function handlePartnerFormChange(){
+          if (!currentSessionDetail) return;
+          const sessionValue = $('partnerSessionInput').value.trim();
+          const nameValue = $('partnerNameInput').value.trim();
+          const idValue = $('partnerIdInput').value.trim();
+          const existing = currentSessionDetail.partner || {};
+          const changed =
+            sessionValue !== (existing.sessionKey || '') ||
+            nameValue !== (existing.name || '') ||
+            idValue !== (existing.id || '');
+          $('btnAssignPartner').disabled = !(changed && (sessionValue || nameValue || idValue));
+        }
+
+        async function assignPartner(){
+          if (!selectedSessionKey) return;
+          const payload = {};
+          const sessionValue = $('partnerSessionInput').value.trim();
+          const nameValue = $('partnerNameInput').value.trim();
+          const idValue = $('partnerIdInput').value.trim();
+          if (sessionValue) payload.partnerSessionKey = sessionValue;
+          if (nameValue) payload.partnerName = nameValue;
+          if (idValue) payload.partnerId = idValue;
+
+          $('btnAssignPartner').disabled = true;
+          try {
+            const response = await apiRequest(`sessions/${selectedSessionKey}/partner`, { method: 'POST', body: payload });
+            currentSessionDetail = response.session;
+            setStatus('동료 정보를 저장했습니다.', 'success');
+            populatePartnerForm(currentSessionDetail);
+            renderSessionDetail(currentSessionDetail);
+            await loadSessions();
+          } catch (error) {
+            setStatus(error.message || '동료 정보를 저장하지 못했습니다.', 'error');
+          }
+        }
+
+        async function clearPartner(){
+          if (!selectedSessionKey) return;
+          $('btnClearPartner').disabled = true;
+          try {
+            const response = await apiRequest(`sessions/${selectedSessionKey}/partner`, { method: 'DELETE' });
+            currentSessionDetail = response.session;
+            setStatus('동료 연결을 해제했습니다.', 'success');
+            populatePartnerForm(currentSessionDetail);
+            renderSessionDetail(currentSessionDetail);
+            await loadSessions();
+          } catch (error) {
+            setStatus(error.message || '동료 연결을 해제하지 못했습니다.', 'error');
+          }
+        }
+
+        function jumpToPartner(){
+          const key = $('btnJumpPartner').dataset.sessionKey;
+          if (!key) return;
+          selectSession(key);
+        }
+
+        function formatDateTime(ms){
+          if (!ms) return '정보 없음';
+          return new Date(ms).toLocaleString('ko-KR');
+        }
+
+        function escapeHtml(str){
+          return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
 
         attemptAutoLogin();
       })();

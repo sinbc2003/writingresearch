@@ -57,6 +57,24 @@ export function createAdminRouter({ adminService, sessionService, chatService })
     }
   });
 
+  router.post('/sessions/:sessionKey/partner', async (req, res, next) => {
+    try {
+      const updated = await sessionService.setPartner(req.params.sessionKey, req.body || {});
+      res.json({ session: updated });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete('/sessions/:sessionKey/partner', async (req, res, next) => {
+    try {
+      const updated = await sessionService.clearPartner(req.params.sessionKey);
+      res.json({ session: updated });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/sessions/:sessionKey/chats/:channel', async (req, res, next) => {
     try {
       const { sessionKey, channel } = req.params;
