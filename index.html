@@ -1,0 +1,2097 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>영어 글쓰기 워크스페이스</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6fb; color: #1f2937; }
+      textarea, input, button { font-family: inherit; }
+      .page-container { max-width: 1200px; margin: 0 auto; padding: 32px 20px 48px; display: flex; flex-direction: column; gap: 20px; }
+      .card { background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); }
+      .hero-card { text-align: center; }
+      .hero-card h1 { margin: 0 0 12px; font-size: 26px; font-weight: 700; color: #111827; }
+      .hero-card p { margin: 0 0 18px; color: #4b5563; font-size: 15px; }
+      .group-buttons { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+      .group-button { min-width: 160px; padding: 18px 20px; border-radius: 12px; border: 1px solid #d0d7e3; background: linear-gradient(135deg, #f8fafc, #eef2ff); font-weight: 700; font-size: 16px; color: #1d4ed8; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+      .group-button:hover { transform: translateY(-4px); box-shadow: 0 14px 26px rgba(37, 99, 235, 0.18); }
+      .group-button:active { transform: translateY(-1px); }
+      .login-card { display: none; max-width: 520px; margin: 0 auto; }
+      .login-header { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+      .login-group { font-size: 18px; font-weight: 700; color: #1d4ed8; }
+      .login-message { font-size: 13px; color: #64748b; }
+      .login-card form { display: flex; flex-direction: column; gap: 16px; }
+      .field { display: flex; flex-direction: column; gap: 6px; }
+      label { font-size: 13px; font-weight: 600; color: #475569; }
+      input[type="text"], textarea { width: 100%; border: 1px solid #d0d7e3; border-radius: 10px; padding: 12px; background: #ffffff; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+      input[type="text"]:focus, textarea:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+      textarea { min-height: 180px; resize: vertical; line-height: 1.6; }
+      button { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+      button:disabled { cursor: not-allowed; opacity: 0.6; box-shadow: none !important; transform: none !important; }
+      .primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; border: none; border-radius: 10px; padding: 12px 18px; font-weight: 700; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); }
+      .primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28); }
+      .secondary { background: #f1f5f9; color: #1f2937; border: 1px solid #d0d7e3; border-radius: 10px; padding: 12px 18px; font-weight: 600; }
+      .ghost { background: transparent; border: none; color: #2563eb; padding: 12px 16px; font-weight: 600; }
+      .ghost:hover { text-decoration: underline; }
+      .link-button { background: none; border: none; color: #2563eb; font-weight: 600; padding: 8px 12px; border-radius: 8px; }
+      .link-button:hover { background: rgba(37, 99, 235, 0.1); }
+      .login-actions { display: flex; gap: 12px; justify-content: flex-end; }
+      .workspace { display: none; flex-direction: column; gap: 18px; }
+      .workspace-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      .user-info { font-size: 14px; font-weight: 600; color: #475569; }
+      .status-bar { padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5f5; background: #eef2ff; color: #1e3a8a; font-size: 14px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+      .status-bar.success { border-color: #bbf7d0; background: #ecfdf5; color: #047857; }
+      .status-bar.warn { border-color: #fde68a; background: #fef3c7; color: #92400e; }
+      .status-bar.error { border-color: #fecaca; background: #fee2e2; color: #b91c1c; }
+      .step-indicator { display: flex; gap: 16px; flex-wrap: wrap; }
+      .step-item { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+      .step-number { width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0; color: #1f2937; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+      .step-info { display: flex; flex-direction: column; gap: 2px; }
+      .step-title { font-size: 14px; font-weight: 700; color: #1f2937; }
+      .step-caption { font-size: 12px; color: #64748b; }
+      .step-item.active { border-color: #2563eb; transform: translateY(-2px); box-shadow: 0 14px 26px rgba(37, 99, 235, 0.16); }
+      .step-item.active .step-number { background: #2563eb; color: #ffffff; }
+      .step-item.completed { border-color: #bbf7d0; }
+      .step-item.completed .step-number { background: #10b981; color: #ffffff; }
+      .workspace-grid { display: grid; gap: 20px; grid-template-columns: 1.1fr 0.9fr; }
+      .left-column, .right-column { display: flex; flex-direction: column; gap: 16px; }
+      .stage-panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+      .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      .panel-header h2 { font-size: 18px; font-weight: 700; margin: 0; color: #111827; }
+      .panel-subtext { font-size: 13px; color: #64748b; }
+      .readonly-block { display: none; padding: 12px; border-radius: 10px; border: 1px dashed #cbd5e1; background: #f8fafc; font-size: 14px; line-height: 1.7; color: #1f2937; white-space: pre-wrap; }
+      .text-block { padding: 12px; border-radius: 10px; border: 1px solid #d8dee9; background: #f8fafc; font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: #1f2937; }
+      .button-row { display: flex; gap: 10px; justify-content: flex-end; }
+      .meta-info { font-size: 12px; color: #64748b; }
+      .right-panel { display: none; flex-direction: column; gap: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; min-height: 360px; }
+      .dictionary-search { display: flex; gap: 10px; }
+      .dictionary-result { padding: 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; display: flex; flex-direction: column; gap: 8px; }
+      .dict-word { font-size: 18px; font-weight: 700; color: #111827; }
+      .dict-pron { font-size: 13px; color: #64748b; }
+      .dict-section { display: flex; flex-direction: column; gap: 6px; }
+      .dict-entry { padding: 8px 10px; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; }
+      .dict-entry strong { font-size: 13px; color: #1f2937; }
+      .dict-examples { display: flex; flex-direction: column; gap: 6px; }
+      .dict-example { padding: 8px 10px; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; font-size: 13px; line-height: 1.5; }
+      .dictionary-history { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #64748b; }
+      .history-item { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; }
+      .history-item .term { font-weight: 600; color: #1f2937; }
+      .history-item .direction { font-weight: 600; color: #475569; }
+      .history-item .translation { color: #2563eb; }
+      .history-item .time { margin-left: auto; color: #94a3b8; font-size: 12px; }
+      .prewriting-preview-block { display: flex; flex-direction: column; gap: 6px; }
+      .prewriting-preview-block strong { font-size: 13px; color: #475569; }
+      .chat-log { flex: 1; min-height: 420px; max-height: 620px; border: 1px solid #d0d7e3; border-radius: 12px; background: radial-gradient(circle at top, #f8fafc 0%, #ffffff 48%); padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+      #peerChatLog { min-height: 420px; max-height: 620px; }
+      .chat-line { display: flex; flex-direction: column; gap: 4px; max-width: 80%; }
+      .chat-line.me { align-self: flex-end; text-align: right; }
+      .chat-line.ai, .chat-line.other { align-self: flex-start; }
+      .chat-line.system { align-self: center; max-width: 100%; text-align: center; }
+      .chat-bubble { padding: 10px 14px; border-radius: 14px; line-height: 1.6; background: #eef2ff; color: #1f2937; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); }
+      .chat-line.me .chat-bubble { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; border-bottom-right-radius: 6px; }
+      .chat-line.ai .chat-bubble { background: #f8fafc; border: 1px solid #cbd5f5; border-bottom-left-radius: 6px; }
+      .chat-line.system .chat-bubble { background: #f1f5f9; color: #475569; border: 1px dashed #cbd5e1; }
+      .chat-meta { font-size: 11px; color: #94a3b8; }
+      .chat-line.me .chat-meta { align-self: flex-end; }
+      .chat-line.pending .chat-meta::after { content: ' · 전송 중'; color: #f97316; }
+      .chat-line.error .chat-bubble { border: 1px solid #f87171; }
+      .chat-input { display: flex; flex-direction: column; gap: 10px; }
+      .chat-input textarea { height: 120px; min-height: 120px; max-height: 120px; resize: none; overflow-y: auto; }
+      #notesInput { min-height: 90px; height: 90px; }
+      #finalInput { min-height: 260px; }
+      .chat-actions { display: flex; justify-content: flex-end; gap: 10px; }
+      .spinner { display: none; align-items: center; gap: 8px; font-size: 13px; color: #64748b; }
+      .partner-box { border: 1px solid #d0d7e3; border-radius: 12px; padding: 12px 14px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); display: flex; flex-direction: column; gap: 6px; }
+      .partner-box h3 { margin: 0; font-size: 16px; font-weight: 700; color: #1f2937; }
+      .partner-meta { font-size: 12px; color: #64748b; }
+      .presence-status { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #475569; }
+      .presence-status span { display: flex; align-items: center; gap: 6px; }
+      .presence-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+      .presence-online { background: #22c55e; }
+      .presence-offline { background: #94a3b8; }
+      .notes-helper { font-size: 12px; color: #94a3b8; }
+      .final-grid { display: grid; gap: 12px; }
+      @media (max-width: 1024px) {
+        .workspace-grid { grid-template-columns: 1fr; }
+        .right-column { order: -1; }
+      }
+      @media (max-width: 640px) {
+        .page-container { padding: 24px 14px 36px; }
+        .group-buttons { flex-direction: column; }
+        .login-actions { flex-direction: column; align-items: stretch; }
+        .step-item { min-width: 100%; }
+        .chat-log { min-height: 320px; max-height: 420px; }
+        #peerChatLog { min-height: 320px; max-height: 420px; }
+        .chat-input textarea { height: 100px; min-height: 100px; max-height: 100px; }
+        #finalInput { min-height: 200px; }
+      }
+      .chat-line.me .chat-content { align-items: flex-end; }
+      .chat-line.ai.with-avatar { flex-direction: row; gap: 10px; max-width: 80%; }
+      .chat-line.ai.with-avatar .chat-content { max-width: calc(100% - 48px); }
+      .chat-line.ai.with-avatar .chat-meta { align-self: flex-start; }
+      .chat-avatar { width: 36px; height: 36px; border-radius: 50%; background-size: cover; background-position: center; border: 1px solid #e2e8f0; flex-shrink: 0; margin-top: 2px; }
+      .reference-block { border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+      .reference-block strong { font-size: 13px; color: #1f2937; }
+      .panel-block { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+      .panel-block:last-of-type { margin-bottom: 0; }
+      #rightStage1 { background: transparent; border: none; padding: 0; min-height: auto; }
+      #rightStage1 .stage-panel { margin: 0; }
+    </style>
+    <script src="./app-config.js"></script>
+  </head>
+  <body>
+    <div class="page-container">
+      <div id="groupCard" class="card hero-card">
+        <h1>영어 글쓰기 4단계 플랫폼폼</h1>
+        <p>집단을 선택하고 식별 번호와 이름으로 로그인하세요.</p>
+        <div class="group-buttons">
+          <button class="group-button" data-group-select="A">A 집단</button>
+          <button class="group-button" data-group-select="B">B 집단</button>
+          <button class="group-button" data-group-select="C">C 집단</button>
+        </div>
+          </div>
+
+      <div id="loginCard" class="card login-card">
+        <div class="login-header">
+          <div id="selectedGroupLabel" class="login-group">집단 미선택</div>
+          <div id="loginMessage" class="login-message">식별번호와 이름을 정확하게 입력해주세요.</div>
+          </div>
+        <form id="loginForm">
+          <div class="field">
+            <label for="studentIdInput">식별 번호</label>
+            <input id="studentIdInput" type="text" placeholder="예) A10100" autocomplete="off" />
+        </div>
+          <div class="field">
+            <label for="studentNameInput">이름</label>
+            <input id="studentNameInput" type="text" placeholder="이름을 입력하세요" autocomplete="off" />
+        </div>
+          <div class="login-actions">
+            <button id="loginSubmit" class="primary" type="submit">실험 시작</button>
+            <button id="btnChangeGroup" class="ghost" type="button">다른 집단 선택</button>
+      </div>
+        </form>
+    </div>
+
+      <div id="workspace" class="workspace">
+        <div class="workspace-toolbar">
+          <div id="userInfo" class="user-info"></div>
+          <button id="btnRestart" class="link-button" type="button">처음으로 돌아가기</button>
+          </div>
+        <div id="statusBar" class="status-bar info">집단을 선택하고 로그인하세요.</div>
+        <div id="stepIndicator" class="step-indicator">
+          <div class="step-item" data-step="1">
+            <div class="step-number">1</div>
+            <div class="step-info">
+              <div class="step-title">사전 글쓰기</div>
+              <div class="step-caption"></div>
+          </div>
+          </div>
+          <div class="step-item" data-step="2">
+            <div class="step-number">2</div>
+            <div class="step-info">
+              <div class="step-title">AI 피드백</div>
+              <div class="step-caption"></div>
+          </div>
+           </div>
+           <div class="step-item" data-step="3">
+             <div class="step-number">3</div>
+             <div class="step-info">
+              <div class="step-title">동료 피드백</div>
+              <div class="step-caption"></div>
+             </div>
+           </div>
+          <div class="step-item" data-step="4">
+            <div class="step-number">4</div>
+            <div class="step-info">
+              <div class="step-title">최종 수정 및 제출</div>
+              <div class="step-caption"></div>
+            </div>
+        </div>
+      </div>
+
+        <div class="workspace-grid">
+          <div class="left-column">
+            <section id="panelPrompt" class="stage-panel" data-step="1">
+              <div class="panel-header">
+                <h2>1단계 · 제시문 안내</h2>
+                <span class="panel-subtext">제시문을 확인한 뒤, 주어진 시간 20분 동안 사전 글쓰기를 진행하세요.
+                </span>
+              </div>
+              <div id="promptContent" class="text-block">제시문이 아직 등록되지 않았습니다.</div>
+            </section>
+
+            <section id="panelDraft" class="stage-panel" data-step="2">
+              <div class="panel-header">
+                <h2 id="draftTitle">2단계 · 글쓰기 수정 관련 메모</h2>
+                <span id="draftInfo" class="panel-subtext">AI 튜터에게 받은 피드백을 참고하여, 글을 어떻게 수정할지에 대한 아이디어를 메모 형태로 자유롭게 정리하세요.</span>
+              </div>
+              <div class="prewriting-preview-block">
+                <strong>나의 사전 글쓰기</strong>
+                <div id="prewritingPreview" class="text-block">사전 글쓰기가 아직 제출되지 않았습니다.</div>
+              </div>
+              <textarea id="draftInput" placeholder="떠오른 아이디어, 수정할 점 등을 간단히 기록하세요."></textarea>
+              <div class="button-row">
+                <button id="btnDraftBack" class="ghost" type="button">이전 단계로 이동</button>
+                <button id="btnSaveDraft" class="secondary" type="button" disabled>메모 저장</button>
+                <button id="btnToPeer" class="primary" type="button" disabled>다음 단계로 이동</button>
+              </div>
+            </section>
+
+            <section id="panelMemoStage3" class="stage-panel" data-step="3">
+              <div class="panel-header">
+                <h2 id="memoStage3Title">3단계 · 글쓰기 수정 관련 추가 메모</h2>
+                <span id="memoStage3Info" class="panel-subtext">동료의 글을 읽고, 10분 동안 어떤 피드백을 줄지 생각해 보세요. 피드백 내용을 메모 형태로 자유롭게 정리하세요. 동료에게서 받은 피드백을 참고하여, 글을 어떻게 수정할지에 대한 아이디어를 메모 형태로 자유롭게 정리하세요.</span>
+              </div>
+              <div class="prewriting-preview-block">
+                <strong>동료 글</strong>
+                <div id="peerStage3Partner" class="text-block">동료 글을 불러오는 중입니다.</div>
+              </div>
+              <div class="prewriting-preview-block">
+                <strong>나의 사전 글쓰기</strong>
+                <div id="peerStage3Self" class="text-block">사전 글쓰기가 아직 제출되지 않았습니다.</div>
+              </div>
+              <textarea id="notesInput" placeholder="추가로 정리하고 싶은 내용을 메모하세요." disabled></textarea>
+              <div class="button-row">
+                <button id="btnStage3Back" class="ghost" type="button">이전 단계로 이동</button>
+                <button id="btnNotesSave" class="secondary" type="button" disabled>3단계 메모 저장</button>
+                <button id="btnPeerNext" class="primary" type="button" disabled>최종 단계로 이동</button>
+              </div>
+            </section>
+
+            <section id="panelFinalSummary" class="stage-panel" data-step="4">
+              <div class="panel-header">
+                <h2>이전 단계 요약</h2>
+                <span class="panel-subtext">최종 글을 수정하여 제출하기 전에, 이전에 받았던 피드백과 메모를 확인하세요.</span>
+              </div>
+              <div class="final-grid">
+                <div>
+                  <strong>사전 글쓰기</strong>
+                  <div id="finalPreText" class="text-block">작성된 사전 글이 없습니다.</div>
+                </div>
+                <div>
+                  <strong>AI 피드백 글쓰기 수정 관련 메모</strong>
+                  <div id="finalStage2Memo" class="text-block">AI 피드백 글쓰기 수정 관련 메모가 아직 없습니다.</div>
+                </div>
+                <div>
+                  <strong>동료 피드백 글쓰기 수정 관련 메모</strong>
+                  <div id="finalStage3Memo" class="text-block">동료 피드백 글쓰기 수정 관련 메모가 아직 없습니다.</div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="right-column">
+            <section id="rightStage1" class="right-panel">
+              <section id="panelPrewriting" class="stage-panel" data-step="1">
+                <div class="panel-header">
+                  <h2>1단계 · 사전 글쓰기</h2>
+                  <span id="prewritingInfo" class="panel-subtext"> 주제에 대한 자신의 입장을 정한 뒤, 영어로 글을 작성하여 제출하세요.
+                  </span>
+                </div>
+                <textarea id="prewritingInput" placeholder="주제에 대한 생각을 자유롭게 작성하세요."></textarea>
+                <div id="prewritingReadonly" class="readonly-block"></div>
+                <div class="button-row">
+                  <button id="btnPreSubmit" class="primary" type="button" disabled>사전 글쓰기 제출</button>
+                </div>
+              </section>
+
+              <section id="panelDictionary" class="stage-panel">
+                <div class="panel-header">
+                  <h2>사전 도구 · 영한·한영 사전</h2>
+                  <span class="panel-subtext">필요한 어휘를 검색하세요.</span>
+                </div>
+                <div class="dictionary-search">
+                  <input id="dictQuery" type="text" placeholder="영어 또는 한국어 단어를 입력하세요." />
+                  <button id="btnDictSearch" class="secondary" type="button">검색</button>
+                </div>
+                <div id="dictResult" class="dictionary-result">
+                  <div class="dict-word">사전 검색 결과</div>
+                  <div class="dict-pron">검색어를 입력하면 결과가 표시됩니다.</div>
+                </div>
+                <div>
+                  <strong>최근 검색</strong>
+                  <div id="dictEmpty" class="panel-subtext">최근 검색 이력이 없습니다.</div>
+                  <div id="dictHistory" class="dictionary-history"></div>
+                </div>
+              </section>
+            </section>
+
+            <section id="rightStage2" class="right-panel">
+              <div class="panel-header">
+                <h2>AI 피드백</h2>
+                <span class="panel-subtext">AI 튜터와 15분간 상호작용하며 자신의 글에 대한 피드백을 받아 보세요. AI 튜터에게 글을 대신 써달라고 요청하는 것은 안 됩니다.</span>
+              </div>
+              <div class="chat-log" id="aiChatLog"></div>
+              <div id="aiChatLoader" class="spinner"><span>AI 응답 생성 중...</span></div>
+              <div class="chat-input">
+                <textarea id="aiInput" placeholder="AI에게 질문하거나 피드백을 요청하세요." disabled></textarea>
+                <div class="chat-actions">
+                  <button id="btnAiSend" class="primary" type="button" disabled>전송</button>
+          </div>
+        </div>
+            </section>
+
+            <section id="rightStage3" class="right-panel">
+              <div class="panel-header">
+                <h2>동료와의 대화</h2>
+                <span class="panel-subtext">동료와 15분간 상호작용하며 자신의 글에 대한 피드백을 받아 보세요. 동료에게 글을 대신 써달라고 요청하는 것은 안 됩니다.</span>
+              </div>
+               <div class="partner-box">
+                 <h3 id="partnerName">동료 정보를 불러오는 중...</h3>
+                 <div id="partnerInfoBox" class="partner-meta">동료 협업 단계입니다.</div>
+      </div>
+               <div class="presence-status">
+                 <span><span id="selfPresenceDot" class="presence-dot presence-offline"></span>나의 상태: <span id="peerPresenceSelf">확인 중...</span></span>
+                 <span><span id="partnerPresenceDot" class="presence-dot presence-offline"></span>동료 상태: <span id="peerPresencePartner">확인 중...</span></span>
+          </div>
+               <div class="chat-log" id="peerChatLog"></div>
+               <div class="chat-input">
+                 <textarea id="peerInput" placeholder="동료에게 메시지를 보내보세요." disabled></textarea>
+                 <div class="chat-actions">
+                   <button id="btnPeerSend" class="primary" type="button" disabled>전송</button>
+                 </div>
+               </div>
+             </section>
+
+            <section id="rightStage4" class="right-panel">
+              <div class="panel-block">
+                <div class="panel-header">
+                  <h2>4단계 · 최종 글쓰기</h2>
+                  <span id="finalInfo" class="panel-subtext">사전 글쓰기를 기반으로 최종 글을 작성하여 제출하세요. 기존 내용을 수정·추가·보완하는 것이 모두 가능합니다.</span>
+                </div>
+                <textarea id="finalInput" placeholder="3단계에서 정리한 내용을 바탕으로 최종 글을 작성하세요." disabled></textarea>
+                <div id="finalReadonly" class="readonly-block"></div>
+                <div class="button-row">
+                  <button id="btnFinalBack" class="ghost" type="button">이전 단계로 이동</button>
+                  <button id="btnFinalSubmit" class="primary" type="button" disabled>최종 제출</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        'use strict';
+
+        const APP_CONFIG = window.APP_CONFIG || { apiBaseUrl: '/api', apiKey: '' };
+
+        function normalizeApiBaseUrl(path){
+          if (!path) return `${window.location.origin}/api/`;
+          const trimmed = String(path).trim();
+          if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+          }
+          const prefixed = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+          const combined = `${window.location.origin}${prefixed}`;
+          return combined.endsWith('/') ? combined : `${combined}/`;
+        }
+
+        function createBackendClient(config){
+          const baseUrl = normalizeApiBaseUrl(config.apiBaseUrl || '/api');
+          const apiKey = config.apiKey || '';
+
+          async function request(method, path, options){
+            const opts = options || {};
+            const url = new URL(path, baseUrl);
+            if (opts.searchParams){
+              Object.entries(opts.searchParams).forEach(function([key, value]){
+                if (value === undefined || value === null || value === '') return;
+                url.searchParams.set(key, value);
+              });
+            }
+            const headers = { 'Content-Type': 'application/json' };
+            if (apiKey) headers['x-api-key'] = apiKey;
+            const fetchOptions = { method: method.toUpperCase(), headers };
+            if (opts.body && fetchOptions.method !== 'GET') {
+              fetchOptions.body = JSON.stringify(opts.body);
+            }
+            const response = await fetch(url.toString(), fetchOptions);
+            if (response.status === 204) return null;
+            const text = await response.text();
+            let payload = null;
+            if (text) {
+              try {
+                payload = JSON.parse(text);
+              } catch (err) {
+                console.error('서버 응답 파싱 실패', err, text);
+                throw new Error('서버 응답을 읽을 수 없습니다.');
+              }
+            }
+            if (!response.ok) {
+              const message = (payload && (payload.error || payload.message)) || response.statusText;
+              const error = new Error(message || '요청에 실패했습니다.');
+              error.status = response.status;
+              error.details = payload;
+              throw error;
+            }
+            return payload;
+          }
+
+          return {
+            isReady: true,
+            getServerDiag: function(){ return request('GET', 'server/diag'); },
+            getPublicSettings: function(){ return request('GET', 'public-settings'); },
+            startSession: function(group, studentId, studentName){
+              return request('POST', 'session/start', { body: { group, studentId, studentName } });
+            },
+            getSessionState: function(sessionKey){
+              return request('GET', `session/${encodeURIComponent(sessionKey)}`);
+            },
+            submitPrewriting: function(sessionKey, text){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/prewriting`, { body: { text } });
+            },
+            savePostDraft: function(sessionKey, text){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/draft`, { body: { text } });
+            },
+            savePeerNotes: function(sessionKey, text){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/notes`, { body: { text } });
+            },
+            submitFinalWriting: function(sessionKey, text){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/final`, { body: { text } });
+            },
+            advanceToPeerStage: function(sessionKey){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/advance`);
+            },
+            advanceToFinalStage: function(sessionKey){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/advance-final`);
+            },
+            regressStage: function(sessionKey){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/regress`);
+            },
+            touchPresence: function(sessionKey){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/presence/touch`);
+            },
+            postPresenceLeave: function(sessionKey, userId, userName){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/presence/leave`, { body: { userId, userName } });
+            },
+            getMessages: function(sessionId, sinceTs, channel){
+              return request('GET', `chat/${encodeURIComponent(channel)}/messages`, { searchParams: { sessionId, since: sinceTs } });
+            },
+            postMessage: function(sessionId, group, userId, userName, role, text, metadata){
+              const channel = (metadata && metadata.channel) || 'ai-feedback';
+              return request('POST', `chat/${encodeURIComponent(channel)}/send`, {
+                body: { sessionId, group, userId, userName, role, text, metadata }
+              });
+            },
+            requestAiIfNeeded: function(sessionId, group, userMessage, context, metadata){
+              return request('POST', 'chat/ai/respond', { body: { sessionId, group, userMessage, context, metadata } });
+            },
+            lookupDictionary: function(query){
+              return request('GET', 'dictionary', { searchParams: { q: query } });
+            }
+          };
+        }
+
+        function createRunner(api, handlers){
+          const currentHandlers = handlers || {};
+          return new Proxy({}, {
+            get: function(_target, prop){
+              if (prop === 'withSuccessHandler') {
+                return function(fn){ return createRunner(api, Object.assign({}, currentHandlers, { success: fn })); };
+              }
+              if (prop === 'withFailureHandler') {
+                return function(fn){ return createRunner(api, Object.assign({}, currentHandlers, { failure: fn })); };
+              }
+              if (typeof api[prop] === 'function') {
+                return function(){
+                  const args = Array.prototype.slice.call(arguments);
+                  return api[prop].apply(api, args)
+                    .then(function(result){
+                      if (typeof currentHandlers.success === 'function') currentHandlers.success(result);
+                      return result;
+                    })
+                    .catch(function(error){
+                      if (typeof currentHandlers.failure === 'function') {
+                        currentHandlers.failure(error);
+                        return;
+                      }
+                      console.error(error);
+                    });
+                };
+              }
+              return undefined;
+            }
+          });
+        }
+
+        function createGoogleScriptRunShim(api){
+          return createRunner(api, {});
+        }
+
+        const backend = createBackendClient(APP_CONFIG);
+        const google = window.google = window.google || {};
+        google.script = google.script || {};
+        google.script.run = createGoogleScriptRunShim(backend);
+        const hasGas = Boolean(backend && backend.isReady);
+
+        const state = {
+          group: '',
+          sessionKey: '',
+          user: { id: '', name: '' },
+          stage: 1,
+          updatedAt: 0,
+          stageChangePending: false,
+          writing: {
+            prewriting: { text: '', submittedAt: 0 },
+            draft: { text: '', savedAt: 0 },
+            notes: { text: '', updatedAt: 0 },
+            final: { text: '', submittedAt: 0 }
+          },
+          steps: {},
+          partner: null,
+          presence: null,
+          status: { message: '집단을 선택하고 로그인하세요.', type: 'info' },
+          aiChat: { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false },
+          peerChat: { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false },
+          timers: { ai: null, peer: null, state: null, presence: null },
+          refreshingState: false,
+          dictionaryHistory: [],
+          localPrewritingDraft: '',
+          localFinalDraft: '',
+          localDraftBuffer: '',
+          localStage3Memo: '',
+          aiAvatarUrl: ''
+        };
+
+        const $ = (id) => document.getElementById(id);
+        const publicConfig = { aiAvatarUrl: '', promptContent: '' };
+
+        function init(){
+          document.querySelectorAll('[data-group-select]').forEach(function(btn){
+            btn.addEventListener('click', function(){ selectGroup(btn.dataset.groupSelect); });
+          });
+
+          document.querySelectorAll('#stepIndicator .step-item').forEach(function(item){
+            item.addEventListener('click', onStepIndicatorClick);
+          });
+
+          const loginForm = $('loginForm');
+          if (loginForm) loginForm.addEventListener('submit', onLoginSubmit);
+          const changeBtn = $('btnChangeGroup');
+          if (changeBtn) changeBtn.addEventListener('click', function(){ resetToGroupSelection(true); });
+          const restartBtn = $('btnRestart');
+          if (restartBtn) restartBtn.addEventListener('click', function(){ if (!state.sessionKey || confirm('현재 세션을 종료하고 처음 화면으로 돌아가시겠습니까?')) resetToGroupSelection(true); });
+
+          const prewritingInput = $('prewritingInput');
+          if (prewritingInput) prewritingInput.addEventListener('input', function(){
+            const btn = $('btnPreSubmit');
+            if (!btn) return;
+            const isStageActive = Number(state.stage || 1) === 1;
+            btn.disabled = !isStageActive || !this.value.trim();
+            state.localPrewritingDraft = this.value;
+          });
+
+          const draftInput = $('draftInput');
+          if (draftInput) draftInput.addEventListener('input', function(){
+            const btn = $('btnSaveDraft');
+            if (!btn) return;
+            const stage = Number(state.stage || 1);
+            const editable = stage === 2 && !state.writing.final.submittedAt;
+            state.localDraftBuffer = this.value;
+            btn.disabled = !editable || !this.value.trim();
+          });
+
+          const draftBackBtn = $('btnDraftBack');
+          if (draftBackBtn) draftBackBtn.addEventListener('click', onGoToPreviousStage);
+
+          const notesInput = $('notesInput');
+          if (notesInput) notesInput.addEventListener('input', function(){
+            const btn = $('btnNotesSave');
+            if (!btn) return;
+            const stage = Number(state.stage || 1);
+            const group = (state.group || '').toUpperCase();
+            const enabled = (stage === 3 && (group === 'A' || group === 'B')) && !state.writing.final.submittedAt;
+            state.localStage3Memo = this.value;
+            btn.disabled = !enabled || !this.value.trim();
+          });
+
+          const stage3BackBtn = $('btnStage3Back');
+          if (stage3BackBtn) stage3BackBtn.addEventListener('click', onGoToPreviousStage);
+
+          const finalInput = $('finalInput');
+          if (finalInput) finalInput.addEventListener('input', function(){
+            state.localFinalDraft = this.value;
+            const btn = $('btnFinalSubmit');
+            if (!btn) return;
+            const canEdit = Number(state.stage || 1) === 4 && !(state.writing.final && Number(state.writing.final.submittedAt || 0) > 0);
+            btn.disabled = !canEdit || !this.value.trim();
+          });
+
+          const finalBackBtn = $('btnFinalBack');
+          if (finalBackBtn) finalBackBtn.addEventListener('click', onGoToPreviousStage);
+
+          const dictQuery = $('dictQuery');
+          if (dictQuery) dictQuery.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); onDictionarySearch(); } });
+          const dictBtn = $('btnDictSearch');
+          if (dictBtn) dictBtn.addEventListener('click', onDictionarySearch);
+
+          const aiSendBtn = $('btnAiSend');
+          if (aiSendBtn) aiSendBtn.addEventListener('click', sendAiMessage);
+          const aiInput = $('aiInput');
+          if (aiInput) aiInput.addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendAiMessage(); } });
+
+          const peerSendBtn = $('btnPeerSend');
+          if (peerSendBtn) peerSendBtn.addEventListener('click', sendPeerMessage);
+          const peerInput = $('peerInput');
+          if (peerInput) peerInput.addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendPeerMessage(); } });
+
+          const preBtn = $('btnPreSubmit');
+          if (preBtn) preBtn.addEventListener('click', onSubmitPrewriting);
+          const draftSaveBtn = $('btnSaveDraft');
+          if (draftSaveBtn) draftSaveBtn.addEventListener('click', onSaveDraft);
+          const toPeerBtn = $('btnToPeer');
+          if (toPeerBtn) toPeerBtn.addEventListener('click', onAdvanceToPeerStage);
+          const notesSaveBtn = $('btnNotesSave');
+          if (notesSaveBtn) notesSaveBtn.addEventListener('click', onSavePeerNotes);
+          const finalBtn = $('btnFinalSubmit');
+          if (finalBtn) finalBtn.addEventListener('click', onSubmitFinalWriting);
+          const peerNextBtn = $('btnPeerNext');
+          if (peerNextBtn) peerNextBtn.addEventListener('click', onPeerNextStage);
+
+          loadPublicSettings();
+          renderWorkspace();
+          setStatus(state.status.message, state.status.type);
+
+          if (hasGas) {
+            try {
+        google.script.run.withSuccessHandler(function(info){
+                if (!info) return;
+                if (!info.teacherSheetId) {
+                  $('loginMessage').textContent = '⚠️ 관리자: 교사 시트 ID가 설정되지 않았습니다.';
+                }
+        }).getServerDiag();
+            } catch (e) { console.error(e); }
+          }
+
+          window.addEventListener('beforeunload', function(){
+            if (!hasGas) return;
+            try {
+              if (state.sessionKey && state.user.id) {
+                google.script.run.postPresenceLeave(state.sessionKey, state.user.id, state.user.name);
+              }
+            } catch (e) { console.error(e); }
+          });
+        }
+
+        function selectGroup(group){
+          state.group = (group || '').toUpperCase();
+          $('selectedGroupLabel').textContent = state.group + ' 집단';
+          $('groupCard').style.display = 'none';
+          $('loginCard').style.display = 'block';
+          $('studentIdInput').focus();
+          setStatus('식별 번호와 이름을 입력하면 세션이 시작됩니다.', 'info');
+          renderUserInfo();
+        }
+
+        function resetState(){
+          state.group = '';
+          state.sessionKey = '';
+          state.user = { id: '', name: '' };
+          state.stage = 1;
+          state.updatedAt = 0;
+          state.stageChangePending = false;
+          state.writing = {
+            prewriting: { text: '', submittedAt: 0 },
+            draft: { text: '', savedAt: 0 },
+            notes: { text: '', updatedAt: 0 },
+            final: { text: '', submittedAt: 0 }
+          };
+          state.steps = {};
+          state.partner = null;
+          state.presence = null;
+          state.status = { message: '집단을 선택하고 로그인하세요.', type: 'info' };
+          state.aiChat = { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false, awaitingResponse: false, welcomeShown: false };
+          state.peerChat = { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false };
+          state.dictionaryHistory = [];
+          state.refreshingState = false;
+          clearChatLog('ai');
+          clearChatLog('peer');
+          state.localPrewritingDraft = '';
+          state.localFinalDraft = '';
+          state.localDraftBuffer = '';
+          state.localStage3Memo = '';
+          state.aiAvatarUrl = publicConfig.aiAvatarUrl || '';
+        }
+
+        function resetToGroupSelection(clearInput){
+          clearAllTimers();
+          resetState();
+          $('workspace').style.display = 'none';
+          $('loginCard').style.display = 'none';
+          $('groupCard').style.display = 'block';
+          if (clearInput) {
+            $('studentIdInput').value = '';
+            $('studentNameInput').value = '';
+          }
+          renderWorkspace();
+          setStatus('집단을 선택하고 로그인하세요.', 'info');
+        }
+
+        function onLoginSubmit(e){
+          e.preventDefault();
+          if (!hasGas) {
+            handleError('백엔드 서비스가 연결되지 않았습니다.');
+            return;
+          }
+          const sid = $('studentIdInput').value.trim();
+          const name = $('studentNameInput').value.trim();
+          if (!state.group) { setStatus('먼저 집단을 선택하세요.', 'warn'); return; }
+          if (!sid || !name) { setStatus('식별 번호와 이름을 모두 입력하세요.', 'warn'); return; }
+          $('loginSubmit').disabled = true;
+          $('loginSubmit').textContent = '진행 중...';
+          setStatus('세션을 초기화하는 중입니다...', 'info');
+        google.script.run.withSuccessHandler(function(res){
+            $('loginSubmit').disabled = false;
+            $('loginSubmit').textContent = '실험 시작';
+            onSessionStart(res);
+            setStatus('세션이 시작되었습니다. 1단계를 진행하세요.', 'success');
+          }).withFailureHandler(function(err){
+            $('loginSubmit').disabled = false;
+            $('loginSubmit').textContent = '실험 시작';
+            handleError(err);
+          }).startSession(state.group, sid, name);
+        }
+
+        function onSessionStart(res){
+          if (!res) { handleError('세션 정보를 불러오지 못했습니다.'); return; }
+          state.group = (res.mode || state.group || '').toUpperCase();
+          state.user = { id: (res.you && res.you.id) || '', name: (res.you && res.you.name) || '' };
+          state.sessionKey = res.sessionKey || '';
+          state.aiChat = { sessionId: res.aiSessionId || '', lastTs: 0, rendered: {}, pending: {}, fetching: false, awaitingResponse: false, welcomeShown: false };
+          state.peerChat = { sessionId: res.peerSessionId || '', lastTs: 0, rendered: {}, pending: {}, fetching: false };
+          state.aiAvatarUrl = publicConfig.aiAvatarUrl || state.aiAvatarUrl || '';
+          state.localPrewritingDraft = '';
+          state.stageChangePending = false;
+          $('loginCard').style.display = 'none';
+          $('groupCard').style.display = 'none';
+          $('workspace').style.display = 'flex';
+          const sessionState = {
+            sessionKey: res.sessionKey,
+            stage: res.stage,
+            updatedAt: Number(res.updatedAt || 0),
+            prewriting: res.writing && res.writing.prewriting ? res.writing.prewriting : res.prewriting,
+            draft: res.writing && res.writing.draft ? res.writing.draft : res.draft,
+            notes: res.writing && res.writing.notes ? res.writing.notes : res.notes,
+            final: res.writing && res.writing.final ? res.writing.final : res.final,
+            steps: res.steps,
+            partner: res.partner,
+            presence: res.presence,
+            aiSessionId: res.aiSessionId,
+            peerSessionId: res.peerSessionId
+          };
+          syncSessionState(sessionState);
+          ensurePollers();
+          sendPresencePing();
+          pollAiMessages();
+          pollPeerMessages();
+        }
+
+        function syncSessionState(data){
+          if (!data) return;
+          const currentUpdatedAt = Number(state.updatedAt || 0);
+          const incomingUpdatedAt = Number(data.updatedAt || 0);
+          if (incomingUpdatedAt && currentUpdatedAt && incomingUpdatedAt < currentUpdatedAt) {
+            console.warn('Stale session state ignored', data);
+            return;
+          }
+          if (incomingUpdatedAt) {
+            state.updatedAt = incomingUpdatedAt;
+          }
+          const prevStage = Number(state.stage || 1);
+          if (data.sessionKey) state.sessionKey = data.sessionKey;
+          if (data.aiSessionId) state.aiChat.sessionId = data.aiSessionId;
+          if (data.peerSessionId) state.peerChat.sessionId = data.peerSessionId;
+          var incomingStage = Number(data.stage || 0);
+          if (incomingStage) {
+            state.stage = incomingStage;
+          }
+          if (!state.stage || state.stage < 1) state.stage = 1;
+          state.writing.prewriting = data.prewriting || state.writing.prewriting;
+          state.writing.draft = data.draft || state.writing.draft;
+          state.writing.notes = data.notes || state.writing.notes;
+          state.writing.final = data.final || state.writing.final;
+          if (Number(state.stage || 1) <= 1 && !(state.writing.prewriting && Number(state.writing.prewriting.submittedAt || 0))) {
+            if (typeof state.localPrewritingDraft !== 'string' || !state.localPrewritingDraft) {
+              state.localPrewritingDraft = (state.writing.prewriting && state.writing.prewriting.text) || state.localPrewritingDraft || '';
+            }
+          } else {
+            state.localPrewritingDraft = '';
+          }
+          state.steps = data.steps || state.steps;
+          state.partner = data.partner || null;
+          state.presence = data.presence || null;
+
+          const currentStage = Number(state.stage || 1);
+          if (currentStage === 4) {
+            if (state.writing.final && Number(state.writing.final.submittedAt || 0) > 0) {
+              state.localFinalDraft = state.writing.final.text || '';
+            } else if (prevStage !== 4 && !state.localFinalDraft) {
+              state.localFinalDraft = (state.writing.final && state.writing.final.text) || (state.writing.prewriting && state.writing.prewriting.text) || '';
+            }
+          } else if (currentStage < 4) {
+            state.localFinalDraft = '';
+          }
+
+          const group = (state.group || '').toUpperCase();
+          if (state.writing.draft && state.writing.draft.text) {
+            if (currentStage !== 2 || !state.localDraftBuffer || state.localDraftBuffer === state.writing.draft.text) {
+              state.localDraftBuffer = state.writing.draft.text;
+            }
+          } else if (currentStage !== 2) {
+            state.localDraftBuffer = '';
+          }
+
+          if (state.writing.notes && state.writing.notes.text) {
+            if (currentStage !== 3 || !state.localStage3Memo || state.localStage3Memo === state.writing.notes.text) {
+              state.localStage3Memo = state.writing.notes.text;
+            }
+          } else if (currentStage !== 3) {
+            state.localStage3Memo = '';
+          }
+
+          renderWorkspace();
+          ensurePollers();
+        }
+
+        function renderWorkspace(){
+          renderUserInfo();
+          updateStepIndicator();
+          updateStageVisibility();
+          renderPrewritingPanel();
+          renderDraftPanel();
+          renderPeerPanel();
+          renderFinalPanel();
+          renderRightPanels();
+          renderPartnerPanel();
+          renderPresence();
+          renderDictionaryHistory();
+          refreshChatControls();
+        }
+
+        function getPreviousStageNumber(){
+          const current = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          if (current <= 1) return 1;
+          if (current === 2) return 1;
+          if (current === 3) return 2;
+          if (current >= 4) return group === 'C' ? 2 : 3;
+          return Math.max(1, current - 1);
+        }
+
+        function updateStageVisibility(){
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const showStage1 = stage <= 1;
+          const showStage2 = stage === 2;
+          const showStage3 = stage === 3 && (group === 'A' || group === 'B');
+          setPanelVisibility('panelPrompt', stage === 1);
+          setPanelVisibility('panelPrewriting', showStage1);
+          setPanelVisibility('panelDraft', showStage2);
+          setPanelVisibility('panelMemoStage3', showStage3);
+          setPanelVisibility('panelFinalSummary', stage >= 4);
+        }
+
+        function setPanelVisibility(id, visible){
+          var el = $(id);
+          if (!el) return;
+          el.style.display = visible ? 'flex' : 'none';
+        }
+
+        function renderUserInfo(){
+          const el = $('userInfo');
+          if (!el) return;
+          if (state.sessionKey) {
+            el.textContent = state.group + '집단 · ' + (state.user.id || '') + ' ' + (state.user.name || '');
+          } else if (state.group) {
+            el.textContent = state.group + '집단을 선택했습니다.';
+          } else {
+            el.textContent = '';
+          }
+        }
+
+        function updateStepIndicator(){
+          const current = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const titleMap = {
+            1: '사전 글쓰기',
+            2: group === 'B' ? '동료 피드백' : 'AI 피드백',
+            3: group === 'B' ? 'AI 피드백' : '동료 피드백',
+            4: '최종 수정 및 제출'
+          };
+          const captionMap = {
+            1: '',
+            2: '',
+            3: '',
+            4: ''
+          };
+          document.querySelectorAll('#stepIndicator .step-item').forEach(function(item){
+            const step = Number(item.dataset.step);
+            item.classList.toggle('active', step === current);
+            item.classList.toggle('completed', step < current);
+            const canNavigate = step !== current && canSelectStage(step) && !state.stageChangePending;
+            item.classList.toggle('clickable', canNavigate);
+            item.setAttribute('aria-disabled', canNavigate ? 'false' : 'true');
+            item.style.cursor = canNavigate ? 'pointer' : '';
+            const titleNode = item.querySelector('.step-title');
+            const captionNode = item.querySelector('.step-caption');
+            if (titleNode) titleNode.textContent = titleMap[step] || '';
+            if (captionNode) captionNode.textContent = captionMap[step] || '';
+          });
+        }
+
+        function getHighestUnlockedStage(){
+          let highest = Number(state.stage || 1) || 1;
+          const steps = state.steps || {};
+          const group = (state.group || '').toUpperCase();
+          if (steps.prewriting && steps.prewriting.completed) {
+            highest = Math.max(highest, 2);
+          }
+          if (group === 'A' || group === 'B') {
+            if (steps.draft && steps.draft.saved) {
+              highest = Math.max(highest, 3);
+            }
+            const finalUnlocked = Number(state.stage || 1) >= 4 || (state.writing && state.writing.final && (state.writing.final.text || Number(state.writing.final.submittedAt || 0))) || (steps.final && steps.final.submitted);
+            if (finalUnlocked) {
+              highest = Math.max(highest, 4);
+            }
+          } else if (group === 'C') {
+            const finalUnlocked = Number(state.stage || 1) >= 4 || (state.writing && state.writing.final && (state.writing.final.text || Number(state.writing.final.submittedAt || 0))) || (steps.final && steps.final.submitted);
+            if (finalUnlocked) {
+              highest = Math.max(highest, 4);
+            }
+          } else {
+            if (Number(state.stage || 1) >= 4 || (steps.final && steps.final.submitted)) {
+              highest = Math.max(highest, 4);
+            }
+          }
+          return Math.max(1, Number(highest || 1));
+        }
+
+        function canSelectStage(step){
+          const desired = Number(step || 0);
+          if (!desired || desired < 1) return false;
+          if (desired === 1) return false;
+          const group = (state.group || '').toUpperCase();
+          if (desired === 3 && !(group === 'A' || group === 'B')) return false;
+          const highest = getHighestUnlockedStage();
+          return desired <= highest;
+        }
+
+        function navigateToStage(targetStage){
+          const target = Number(targetStage || 0);
+          if (!target || target < 1) return;
+          const current = Number(state.stage || 1);
+          if (target === current) return;
+          const highest = getHighestUnlockedStage();
+          if (target > highest) {
+            setStatus('아직 진행되지 않은 단계입니다.', 'warn');
+            return;
+          }
+          if (!canSelectStage(target)) {
+            setStatus('해당 단계로 이동할 수 없습니다.', 'warn');
+            return;
+          }
+          if (!hasGas) return;
+          if (!state.sessionKey) { setStatus('세션이 활성화되지 않았습니다.', 'error'); return; }
+          if (state.stageChangePending) return;
+          state.stageChangePending = true;
+          updateStepIndicator();
+          const label = formatStageName(target) || (target + '단계');
+          setStatus(label + '로 이동하는 중입니다...', 'info');
+          google.script.run.withSuccessHandler(function(res){
+            state.stageChangePending = false;
+            if (res && typeof res.stage !== 'undefined') {
+              syncSessionState(res);
+              setStatus(formatStageName(res.stage) + '로 이동했습니다.', 'success');
+            } else {
+              syncSessionState(res || {});
+              setStatus('단계를 변경했습니다.', 'success');
+            }
+          }).withFailureHandler(function(err){
+            state.stageChangePending = false;
+            updateStepIndicator();
+            handleError(err);
+          }).jumpToStage(state.sessionKey, target);
+        }
+
+        function onStepIndicatorClick(event){
+          const step = Number(event.currentTarget && event.currentTarget.dataset.step);
+          if (!step) return;
+          navigateToStage(step);
+        }
+
+        function renderPrewritingPanel(){
+          const textarea = $('prewritingInput');
+          const readonly = $('prewritingReadonly');
+          const info = $('prewritingInfo');
+          if (!textarea || !readonly || !info) return;
+          const storedText = state.writing.prewriting.text || '';
+          const submittedAt = Number(state.writing.prewriting.submittedAt || 0);
+          const isStageActive = Number(state.stage || 1) === 1;
+          const completed = Boolean(storedText && submittedAt);
+          if (!completed && !state.localPrewritingDraft) {
+            state.localPrewritingDraft = storedText;
+          }
+          const workingText = completed ? storedText : (typeof state.localPrewritingDraft === 'string' ? state.localPrewritingDraft : storedText);
+          textarea.value = workingText;
+          if (!completed && isStageActive) {
+            state.localPrewritingDraft = workingText;
+          }
+          textarea.disabled = completed || !isStageActive;
+          readonly.style.display = completed ? 'block' : 'none';
+          readonly.textContent = completed ? storedText : '';
+          const submitBtn = $('btnPreSubmit');
+          if (submitBtn) submitBtn.disabled = !isStageActive || completed || !textarea.value.trim();
+          info.textContent = completed ? '제출 시간: ' + formatDate(submittedAt) : '사전 글쓰기를 작성하고 제출하세요.';
+        }
+
+        function renderDraftPanel(){
+          const textarea = $('draftInput');
+          const info = $('draftInfo');
+          const titleEl = $('draftTitle');
+          const previewEl = $('prewritingPreview');
+          if (!textarea || !info) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const editable = stage === 2 && !state.writing.final.submittedAt;
+          const savedText = state.writing.draft.text || '';
+          if (previewEl) {
+            const prewritingText = (state.writing.prewriting && state.writing.prewriting.text) || '';
+            previewEl.textContent = prewritingText ? prewritingText : '사전 글쓰기가 아직 제출되지 않았습니다.';
+          }
+          if (savedText) {
+            state.localDraftBuffer = savedText;
+          }
+          const workingText = stage === 2 ? (state.localDraftBuffer || savedText || '') : savedText;
+          if (textarea.value !== workingText) textarea.value = workingText;
+          textarea.disabled = !editable;
+          if (editable) state.localDraftBuffer = textarea.value;
+          const saveBtn = $('btnSaveDraft');
+          if (saveBtn) saveBtn.disabled = !editable || !textarea.value.trim();
+          const moveBtn = $('btnToPeer');
+          if (moveBtn) {
+            const hasSaved = !!savedText && Number(state.writing.draft.savedAt || 0) > 0;
+            let nextLabel = '다음 단계로 이동';
+            if (group === 'A') nextLabel = '동료 피드백 단계로 이동';
+            else if (group === 'C') nextLabel = '최종 단계로 이동';
+            else if (group === 'B') nextLabel = 'AI 피드백 단계로 이동';
+            moveBtn.textContent = nextLabel;
+            moveBtn.disabled = !hasSaved;
+          }
+          if (titleEl) {
+            if (group === 'B') titleEl.textContent = '2단계 · 동료 메모';
+            else titleEl.textContent = '2단계 · 글쓰기 수정 관련 메모';
+          }
+          const savedAt = Number(state.writing.draft.savedAt || 0);
+          if (savedAt) {
+            info.textContent = '마지막 메모 저장: ' + formatDate(savedAt);
+        } else {
+            if (group === 'B') {
+              info.textContent = '동료와의 대화에서 얻은 포인트를 기록한 뒤 이동하세요.';
+            } else {
+              info.textContent = 'AI 튜터에게 받은 피드백을 참고하여, 글을 어떻게 수정할지에 대한 아이디어를 메모 형태로 자유롭게 정리하세요.';
+            }
+          }
+          const backBtn = $('btnDraftBack');
+          if (backBtn) {
+            const prevStage = getPreviousStageNumber();
+            const currentStage = Number(state.stage || 1);
+            if (prevStage < currentStage) {
+              backBtn.disabled = false;
+              backBtn.textContent = '← ' + (formatStageName(prevStage) || (prevStage + '단계')) + '로 이동';
+            } else {
+              backBtn.disabled = true;
+              backBtn.textContent = '이전 단계로 이동';
+            }
+          }
+        }
+
+        function renderPeerPanel(){
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isMemoStage = stage === 3 && (group === 'A' || group === 'B');
+          const titleEl = $('memoStage3Title');
+          const infoEl = $('memoStage3Info');
+          const notesInput = $('notesInput');
+          const saveBtn = $('btnNotesSave');
+          const nextBtn = $('btnPeerNext');
+          const partnerPreview = $('peerStage3Partner');
+          const selfPreview = $('peerStage3Self');
+
+          if (!notesInput || !saveBtn || !nextBtn) return;
+
+          if (titleEl) {
+            titleEl.textContent = '3단계 · 글쓰기 수정 관련 추가 메모';
+          }
+
+          if (infoEl) {
+            infoEl.textContent = '동료의 글을 읽고, 10분 동안 어떤 피드백을 줄지 생각해 보세요. 피드백 내용을 메모 형태로 자유롭게 정리하세요. 동료에게서 받은 피드백을 참고하여, 글을 어떻게 수정할지에 대한 아이디어를 메모 형태로 자유롭게 정리하세요.';
+            const memoSavedAt = Number(state.writing.notes.updatedAt || 0);
+            if (memoSavedAt) infoEl.textContent += ' · 마지막 저장: ' + formatDate(memoSavedAt);
+          }
+
+          if (partnerPreview) {
+            const partnerText = (state.partner && state.partner.prewriting && state.partner.prewriting.text) || '';
+            partnerPreview.textContent = partnerText ? partnerText : '동료 글이 아직 준비되지 않았습니다.';
+          }
+
+          if (selfPreview) {
+            const selfText = (state.writing.prewriting && state.writing.prewriting.text) || '';
+            const submitted = Number(state.writing.prewriting && state.writing.prewriting.submittedAt || 0) > 0;
+            selfPreview.textContent = submitted && selfText ? selfText : '사전 글쓰기가 아직 제출되지 않았습니다.';
+          }
+
+          if (state.writing.notes && state.writing.notes.text) {
+            if (!isMemoStage || !state.localStage3Memo || state.localStage3Memo === state.writing.notes.text) {
+              state.localStage3Memo = state.writing.notes.text;
+            }
+          } else if (stage !== 3) {
+            state.localStage3Memo = '';
+          }
+
+          const workingText = isMemoStage ? (state.localStage3Memo || state.writing.notes.text || '') : (state.writing.notes.text || '');
+          if (notesInput.value !== workingText) notesInput.value = workingText;
+
+          const memoEnabled = isMemoStage && !state.writing.final.submittedAt;
+          notesInput.disabled = !memoEnabled;
+          if (memoEnabled) state.localStage3Memo = notesInput.value;
+          saveBtn.disabled = !memoEnabled || !notesInput.value.trim();
+
+          nextBtn.textContent = '최종 단계로 이동';
+          const hasSaved = !!(state.writing.notes.text && state.writing.notes.updatedAt);
+          nextBtn.disabled = !isMemoStage || !hasSaved;
+
+          const backBtn = $('btnStage3Back');
+          if (backBtn) {
+            const prevStage = getPreviousStageNumber();
+            const currentStage = Number(state.stage || 1);
+            if (prevStage < currentStage) {
+              backBtn.disabled = false;
+              backBtn.textContent = '← ' + (formatStageName(prevStage) || (prevStage + '단계')) + '로 이동';
+            } else {
+              backBtn.disabled = true;
+              backBtn.textContent = '이전 단계로 이동';
+            }
+          }
+        }
+
+        function renderFinalPanel(){
+          const textarea = $('finalInput');
+          const readonly = $('finalReadonly');
+          const submitBtn = $('btnFinalSubmit');
+          const info = $('finalInfo');
+          const stage = Number(state.stage || 1);
+          const finalData = state.writing.final || {};
+          const prewritingText = (state.writing.prewriting && state.writing.prewriting.text) || '';
+          const stage2Memo = (state.writing.draft && state.writing.draft.text) || '';
+          const stage3Memo = (state.writing.notes && state.writing.notes.text) || '';
+          const finalText = String(finalData.text || '');
+          const finalSubmittedAt = Number(finalData.submittedAt || 0);
+          const hasSubmitted = finalSubmittedAt > 0;
+          const canEdit = stage === 4 && !hasSubmitted;
+
+          if (state.localFinalDraft == null) state.localFinalDraft = '';
+          if (stage === 4) {
+            if (hasSubmitted) {
+              state.localFinalDraft = finalText;
+            } else if (!state.localFinalDraft) {
+              state.localFinalDraft = finalText || prewritingText || '';
+            }
+          }
+
+          if (textarea) {
+            if (textarea.value !== state.localFinalDraft) textarea.value = state.localFinalDraft;
+            textarea.disabled = !canEdit;
+            textarea.style.display = canEdit ? 'block' : 'none';
+          }
+          if (readonly) {
+            readonly.textContent = hasSubmitted ? finalText : state.localFinalDraft || '';
+            readonly.style.display = canEdit ? 'none' : 'block';
+          }
+          if (submitBtn) {
+            submitBtn.disabled = !canEdit || !state.localFinalDraft.trim();
+            submitBtn.textContent = hasSubmitted ? '최종 제출 완료' : '최종 제출';
+          }
+          if (info) {
+            info.textContent = hasSubmitted ? '최종 제출 시간: ' + formatDate(finalSubmittedAt) : '사전 글쓰기를 기반으로 최종 글을 작성하여 제출하세요. 기존 내용을 수정·추가·보완하는 것이 모두 가능합니다.';
+          }
+
+          const backBtn = $('btnFinalBack');
+          if (backBtn) {
+            const prevStage = getPreviousStageNumber();
+            const currentStage = Number(state.stage || 1);
+            if (prevStage < currentStage) {
+              backBtn.disabled = false;
+              backBtn.textContent = '← ' + (formatStageName(prevStage) || (prevStage + '단계')) + '로 이동';
+            } else {
+              backBtn.disabled = true;
+              backBtn.textContent = '이전 단계로 이동';
+            }
+          }
+
+          $('finalPreText').textContent = prewritingText || '작성된 사전 글이 없습니다.';
+          $('finalStage2Memo').textContent = stage2Memo || 'AI 피드백 글쓰기 수정 관련 메모가 아직 없습니다.';
+          $('finalStage3Memo').textContent = stage3Memo || '동료 피드백 글쓰기 수정 관련 메모가 아직 없습니다.';
+        }
+
+        function renderRightPanels(){
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const showDict = stage <= 1;
+          const showAiChat = (stage === 2 && (group === 'A' || group === 'C')) || (stage === 3 && group === 'B');
+          const showPeerChat = (stage === 2 && group === 'B') || (stage === 3 && group === 'A');
+          togglePanel('rightStage1', showDict);
+          togglePanel('rightStage2', showAiChat);
+          togglePanel('rightStage3', showPeerChat);
+          togglePanel('rightStage4', stage >= 4);
+          if (showAiChat) ensureAiWelcomeMessage();
+        }
+
+        function togglePanel(id, visible){
+          const el = $(id);
+          if (!el) return;
+          el.style.display = visible ? 'flex' : 'none';
+        }
+
+        function renderPartnerPanel(){
+          const partner = state.partner;
+          const group = (state.group || '').toUpperCase();
+          const stage = Number(state.stage || 1);
+          const nameEl = $('partnerName');
+          const infoEl = $('partnerInfoBox');
+          if (!nameEl || !infoEl) return;
+          if (partner) {
+            nameEl.textContent = (partner.name || '동료') + ' 학생';
+            const peerStageName = formatStageName(partner.stage || 1);
+            if (stage === 2 && group === 'B') {
+              infoEl.textContent = '사전 글을 검토 중입니다. 동료 단계: ' + peerStageName;
+            } else if (stage === 3 && group === 'A') {
+              infoEl.textContent = '사후 글을 검토 중입니다. 동료 단계: ' + peerStageName;
+            } else {
+              infoEl.textContent = '현재 단계: ' + peerStageName;
+            }
+          } else {
+            nameEl.textContent = '동료 정보를 불러오는 중...';
+            if (group === 'A' || group === 'B') {
+              infoEl.textContent = '동료 매칭 정보를 기다리고 있습니다.';
+            } else {
+              infoEl.textContent = '이 단계에서는 동료 정보가 필요하지 않습니다.';
+            }
+          }
+        }
+
+        function renderPresence(){
+          const selfInfo = state.presence && state.presence.self;
+          const partnerInfo = state.presence && state.presence.partner;
+          const selfText = describePresence(selfInfo);
+          const partnerText = describePresence(partnerInfo);
+          $('peerPresenceSelf').textContent = selfText;
+          $('peerPresencePartner').textContent = partnerText;
+          updatePresenceDot('selfPresenceDot', selfInfo && selfInfo.online);
+          updatePresenceDot('partnerPresenceDot', partnerInfo && partnerInfo.online);
+        }
+
+        function ensureAiWelcomeMessage(){
+          if (!state.aiChat) return;
+          if (state.aiChat.welcomeShown) return;
+          const logEl = $('aiChatLog');
+          if (!logEl) return;
+          appendChatMessage('ai', { ts: 0, role: 'system', senderName: '시스템', text: '글쓰기와 관련된 궁금한 것을 질문하세요.' }, { pending: false });
+          state.aiChat.welcomeShown = true;
+        }
+
+        function setAiPending(waiting){
+          if (!state.aiChat) return;
+          state.aiChat.awaitingResponse = !!waiting;
+          refreshChatControls();
+        }
+
+        function updatePresenceDot(id, online){
+          const dot = $(id);
+          if (!dot) return;
+          dot.classList.toggle('presence-online', !!online);
+          dot.classList.toggle('presence-offline', !online);
+        }
+
+        function renderDictionaryHistory(){
+          const historyEl = $('dictHistory');
+          const emptyEl = $('dictEmpty');
+          if (!historyEl || !emptyEl) return;
+          historyEl.innerHTML = '';
+          if (!state.dictionaryHistory.length) {
+            emptyEl.style.display = 'block';
+            return;
+          }
+          emptyEl.style.display = 'none';
+          state.dictionaryHistory.slice(-5).reverse().forEach(function(entry){
+            const row = document.createElement('div');
+            row.className = 'history-item';
+            const term = document.createElement('span');
+            term.className = 'term';
+            term.textContent = entry.word || '';
+            const arrow = document.createElement('span');
+            arrow.className = 'direction';
+            arrow.textContent = formatDictionaryDirection(entry.direction) || '→';
+            const summary = document.createElement('span');
+            summary.className = 'translation';
+            summary.textContent = entry.summary || '';
+            const time = document.createElement('span');
+            time.className = 'time';
+            time.textContent = formatTime(entry.timestamp);
+            row.appendChild(term);
+            row.appendChild(arrow);
+            row.appendChild(summary);
+            row.appendChild(time);
+            row.addEventListener('click', function(){
+              if (entry.data) renderDictionaryResult(entry.data);
+            });
+            historyEl.appendChild(row);
+          });
+        }
+
+        function refreshChatControls(){
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const aiEnabled = !!state.aiChat.sessionId && ((stage === 2 && (group === 'A' || group === 'C')) || (stage === 3 && group === 'B'));
+          const aiPending = state.aiChat && state.aiChat.awaitingResponse;
+          const aiInput = $('aiInput');
+          const aiBtn = $('btnAiSend');
+          if (aiInput) aiInput.disabled = !aiEnabled || aiPending;
+          if (aiBtn) aiBtn.disabled = !aiEnabled || aiPending;
+          const peerEnabled = !!state.peerChat.sessionId && ((stage === 2 && group === 'B') || (stage === 3 && group === 'A'));
+          $('peerInput').disabled = !peerEnabled;
+          $('btnPeerSend').disabled = !peerEnabled;
+        }
+
+        function onSubmitPrewriting(){
+          if (!hasGas) return;
+          if (!state.sessionKey) { setStatus('세션이 활성화되지 않았습니다.', 'error'); return; }
+          const text = $('prewritingInput').value.trim();
+          if (!text) { setStatus('사전 글쓰기 내용을 입력하세요.', 'warn'); return; }
+          $('btnPreSubmit').disabled = true;
+          setStatus('사전 글쓰기를 제출하는 중입니다...', 'info');
+          google.script.run.withSuccessHandler(function(res){
+            state.stage = Math.max(2, Number(state.stage || 1));
+            setStatus('사전 글쓰기가 제출되었습니다. 2단계를 진행하세요.', 'success');
+            syncSessionState(res);
+            if (state.stage < 2) {
+              state.stage = 2;
+              renderWorkspace();
+            }
+          }).withFailureHandler(function(err){
+            $('btnPreSubmit').disabled = false;
+            handleError(err);
+          }).submitPrewriting(state.sessionKey, text);
+        }
+
+        function onSaveDraft(){
+          if (!hasGas) return;
+          const text = $('draftInput').value.trim();
+          if (!text) { setStatus('2단계 메모를 입력하세요.', 'warn'); return; }
+          $('btnSaveDraft').disabled = true;
+          setStatus('2단계 메모를 저장하는 중입니다...', 'info');
+          google.script.run.withSuccessHandler(function(res){
+            state.localDraftBuffer = text;
+            setStatus('2단계 메모가 저장되었습니다.', 'success');
+            syncSessionState(res);
+          }).withFailureHandler(function(err){
+            $('btnSaveDraft').disabled = false;
+            handleError(err);
+          }).savePostDraft(state.sessionKey, text);
+        }
+
+        function onAdvanceToPeerStage(){
+          if (!hasGas) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          if (stage === 2 && group === 'A') {
+            if (!confirm('동료 메모 단계로 이동하시겠습니까?')) return;
+            $('btnToPeer').disabled = true;
+            setStatus('동료 메모 단계를 여는 중입니다...', 'info');
+            google.script.run.withSuccessHandler(function(res){
+              setStatus('동료 메모 단계가 열렸습니다.', 'success');
+              syncSessionState(res);
+            }).withFailureHandler(function(err){
+              $('btnToPeer').disabled = false;
+              handleError(err);
+            }).advanceToPeerStage(state.sessionKey);
+          } else if (stage === 2 && group === 'B') {
+            if (!confirm('AI 피드백 단계로 이동하시겠습니까?')) return;
+            $('btnToPeer').disabled = true;
+            setStatus('AI 피드백 단계를 여는 중입니다...', 'info');
+            google.script.run.withSuccessHandler(function(res){
+              setStatus('AI 피드백 단계가 열렸습니다.', 'success');
+              syncSessionState(res);
+            }).withFailureHandler(function(err){
+              $('btnToPeer').disabled = false;
+              handleError(err);
+            }).advanceToPeerStage(state.sessionKey);
+          } else if (stage === 2 && group === 'C') {
+            if (!confirm('최종 단계로 이동하시겠습니까?')) return;
+            $('btnToPeer').disabled = true;
+            setStatus('최종 단계를 여는 중입니다...', 'info');
+            google.script.run.withSuccessHandler(function(res){
+              setStatus('최종 단계로 이동했습니다.', 'success');
+              syncSessionState(res);
+            }).withFailureHandler(function(err){
+              $('btnToPeer').disabled = false;
+              handleError(err);
+            }).advanceToPeerStage(state.sessionKey);
+        } else {
+            setStatus('현재 단계에서는 이동할 수 없습니다.', 'warn');
+          }
+        }
+
+        function onPeerNextStage(){
+          if (!hasGas) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const btn = $('btnPeerNext');
+          if (stage === 3 && (group === 'A' || group === 'B')) {
+            if (!confirm('최종 단계로 이동하시겠습니까?')) return;
+            if (btn) btn.disabled = true;
+            setStatus('최종 단계를 여는 중입니다...', 'info');
+            google.script.run.withSuccessHandler(function(res){
+              setStatus('최종 단계로 이동했습니다.', 'success');
+              syncSessionState(res);
+            }).withFailureHandler(function(err){
+              if (btn) btn.disabled = false;
+              handleError(err);
+            }).advanceToFinalStage(state.sessionKey);
+        } else {
+            setStatus('현재 단계에서는 이동할 수 없습니다.', 'warn');
+          }
+        }
+
+        function onGoToPreviousStage(event){
+          if (!hasGas) return;
+          if (!state.sessionKey) { setStatus('세션이 활성화되지 않았습니다.', 'error'); return; }
+          const currentStage = Number(state.stage || 1);
+          const prevStage = getPreviousStageNumber();
+          if (prevStage >= currentStage) {
+            setStatus('이전 단계가 없습니다.', 'warn');
+            return;
+          }
+          const prevLabel = formatStageName(prevStage) || (prevStage + '단계');
+          if (!confirm(prevLabel + '로 이동하시겠습니까?')) return;
+          const trigger = event && event.currentTarget;
+          if (trigger) trigger.disabled = true;
+          state.stageChangePending = true;
+          updateStepIndicator();
+          setStatus(prevLabel + '로 이동하는 중입니다...', 'info');
+          google.script.run.withSuccessHandler(function(res){
+            if (trigger) trigger.disabled = false;
+            state.stageChangePending = false;
+            if (res && res.stage) {
+              if (Number(res.stage) < Number(state.stage || 1)) {
+                state.stage = Number(res.stage);
+              }
+              syncSessionState(res);
+              setStatus(formatStageName(res.stage) + '로 이동했습니다.', 'success');
+            } else {
+              setStatus('이전 단계로 이동했습니다.', 'success');
+              syncSessionState(res || {});
+            }
+          }).withFailureHandler(function(err){
+            if (trigger) trigger.disabled = false;
+            state.stageChangePending = false;
+            updateStepIndicator();
+            handleError(err);
+          }).regressStage(state.sessionKey);
+        }
+
+        function onSavePeerNotes(){
+          if (!hasGas) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isMemoStage = stage === 3 && (group === 'A' || group === 'B');
+          if (!isMemoStage) { setStatus('3단계 메모 단계에서만 저장할 수 있습니다.', 'warn'); return; }
+          const text = $('notesInput').value || '';
+          if (!text.trim()) {
+            $('btnNotesSave').disabled = false;
+            setStatus('3단계 메모를 입력하세요.', 'warn');
+            return;
+          }
+          $('btnNotesSave').disabled = true;
+          setStatus('3단계 메모를 저장하는 중입니다...', 'info');
+          const cleanedText = text.trim();
+          google.script.run.withSuccessHandler(function(res){
+            state.localStage3Memo = cleanedText;
+            setStatus('3단계 메모가 저장되었습니다.', 'success');
+            syncSessionState(res);
+          }).withFailureHandler(function(err){
+            $('btnNotesSave').disabled = false;
+            handleError(err);
+          }).savePeerNotes(state.sessionKey, cleanedText);
+        }
+        function onSubmitFinalWriting(){
+          if (!hasGas) return;
+          const stage = Number(state.stage || 1);
+          if (stage !== 4) { setStatus('최종 단계에서만 제출할 수 있습니다.', 'warn'); return; }
+          const textArea = $('finalInput');
+          const content = (state.localFinalDraft || (textArea ? textArea.value : '') || '').trim();
+          if (!content) { setStatus('최종 글을 작성하세요.', 'warn'); return; }
+          if (!confirm('현재 작성한 최종 글을 제출하시겠습니까? 제출 후에는 수정할 수 없습니다.')) return;
+          const btn = $('btnFinalSubmit');
+          if (btn) btn.disabled = true;
+          setStatus('최종 결과를 제출하는 중입니다...', 'info');
+          google.script.run.withSuccessHandler(function(res){
+            setStatus('최종 제출이 완료되었습니다.', 'success');
+            syncSessionState(res);
+          }).withFailureHandler(function(err){
+            if (btn) btn.disabled = false;
+            handleError(err);
+          }).submitFinalWriting(state.sessionKey, content);
+        }
+
+        function extractPrimaryMeaning(data){
+          if (!data || !Array.isArray(data.entries)) return '';
+          for (var i = 0; i < data.entries.length; i++) {
+            var entry = data.entries[i];
+            if (!entry || !Array.isArray(entry.meanings)) continue;
+            for (var j = 0; j < entry.meanings.length; j++) {
+              var meaning = entry.meanings[j];
+              if (meaning && String(meaning).trim()) {
+                return String(meaning).trim();
+              }
+            }
+          }
+          return '';
+        }
+
+        function resolveDictionaryDirection(data, fallbackQuery){
+          if (data && data.direction) return data.direction;
+          var source = '';
+          if (data && data.word) source = String(data.word);
+          if (!source && fallbackQuery) source = String(fallbackQuery);
+          if (!source) return 'en-ko';
+          var hasHangul = /[\u3131-\u318E\uAC00-\uD7A3]/.test(source);
+          var hasLatin = /[A-Za-z]/.test(source);
+          if (hasHangul && !hasLatin) return 'ko-en';
+          if (hasLatin && !hasHangul) return 'en-ko';
+          return hasHangul ? 'ko-en' : 'en-ko';
+        }
+
+        function formatDictionaryDirection(direction){
+          if (direction === 'ko-en') return '한→영';
+          if (direction === 'en-ko') return '영→한';
+          return '';
+        }
+
+        function onDictionarySearch(){
+          if (!hasGas) return;
+          const query = $('dictQuery').value.trim();
+          if (!query) { setStatus('검색어를 입력하세요.', 'warn'); return; }
+          $('btnDictSearch').disabled = true;
+          setStatus('사전을 조회하는 중입니다...', 'info');
+          google.script.run.withSuccessHandler(function(res){
+            $('btnDictSearch').disabled = false;
+            if (res && res.ok && res.data) {
+              const direction = resolveDictionaryDirection(res.data, query);
+              const normalizedData = Object.assign({}, res.data, { direction: direction });
+              renderDictionaryResult(normalizedData);
+              const primaryMeaning = extractPrimaryMeaning(normalizedData);
+              const historyEntry = {
+                word: normalizedData.word || query,
+                pronunciation: normalizedData.pronunciation || '',
+                summary: primaryMeaning,
+                direction: normalizedData.direction,
+                timestamp: Date.now(),
+                data: normalizedData
+              };
+              state.dictionaryHistory.push(historyEntry);
+              if (state.dictionaryHistory.length > 10) state.dictionaryHistory = state.dictionaryHistory.slice(-10);
+              renderDictionaryHistory();
+              setStatus('사전 검색 결과가 업데이트되었습니다.', 'success');
+        } else {
+              renderDictionaryResult(null, res && res.message ? res.message : '사전 결과가 없습니다.');
+              setStatus(res && res.message ? res.message : '사전 검색에 실패했습니다.', 'warn');
+            }
+          }).withFailureHandler(function(err){
+            $('btnDictSearch').disabled = false;
+            renderDictionaryResult(null, err && err.message ? err.message : '사전 검색 중 오류가 발생했습니다.');
+            handleError(err);
+          }).lookupDictionary(query);
+        }
+
+        function renderDictionaryResult(data, message){
+          const result = $('dictResult');
+          if (!result) return;
+          result.innerHTML = '';
+          if (!data) {
+            const word = document.createElement('div');
+            word.className = 'dict-word';
+            word.textContent = message || '검색 결과가 없습니다.';
+            result.appendChild(word);
+          return;
+        }
+          const direction = resolveDictionaryDirection(data);
+          const directionLabel = formatDictionaryDirection(direction);
+          const primaryMeaning = extractPrimaryMeaning(data);
+          const headingParts = [];
+          if (directionLabel) headingParts.push(directionLabel);
+          if (data.word) headingParts.push(data.word);
+          if (primaryMeaning && primaryMeaning !== data.word) headingParts.push(primaryMeaning);
+          const headingEl = document.createElement('div');
+          headingEl.className = 'dict-word';
+          headingEl.textContent = headingParts.length ? headingParts.join(' · ') : (data.word || '사전 검색 결과');
+          result.appendChild(headingEl);
+          if (data.pronunciation) {
+            const pron = document.createElement('div');
+            pron.className = 'dict-pron';
+            pron.textContent = data.pronunciation;
+            result.appendChild(pron);
+          }
+          if (Array.isArray(data.entries) && data.entries.length) {
+            const entriesWrap = document.createElement('div');
+            entriesWrap.className = 'dict-section';
+            data.entries.forEach(function(entry){
+              const item = document.createElement('div');
+              item.className = 'dict-entry';
+              const pos = document.createElement('strong');
+              pos.textContent = entry.pos || '';
+              item.appendChild(pos);
+              if (Array.isArray(entry.meanings) && entry.meanings.length) {
+                const list = document.createElement('ul');
+                list.style.margin = '6px 0 0 12px';
+                list.style.padding = '0';
+                list.style.listStyle = 'disc';
+                entry.meanings.forEach(function(m){
+                  const li = document.createElement('li');
+                  li.textContent = m;
+                  list.appendChild(li);
+                });
+                item.appendChild(list);
+              }
+              entriesWrap.appendChild(item);
+            });
+            result.appendChild(entriesWrap);
+          }
+          if (Array.isArray(data.examples) && data.examples.length) {
+            const examplesWrap = document.createElement('div');
+            examplesWrap.className = 'dict-examples';
+            data.examples.forEach(function(example){
+              const row = document.createElement('div');
+              row.className = 'dict-example';
+              const primaryKey = direction === 'ko-en' ? 'ko' : 'en';
+              const secondaryKey = direction === 'ko-en' ? 'en' : 'ko';
+              const primaryDiv = document.createElement('div');
+              primaryDiv.style.color = '#1f2937';
+              primaryDiv.style.fontWeight = '600';
+              primaryDiv.textContent = example[primaryKey] || '';
+              const secondaryDiv = document.createElement('div');
+              secondaryDiv.style.color = '#2563eb';
+              secondaryDiv.textContent = example[secondaryKey] || '';
+              row.appendChild(primaryDiv);
+              row.appendChild(secondaryDiv);
+              examplesWrap.appendChild(row);
+            });
+            result.appendChild(examplesWrap);
+          }
+        }
+
+        function sendAiMessage(){
+          if (!hasGas) return;
+          if (!state.aiChat.sessionId) { setStatus('AI 세션이 준비되지 않았습니다.', 'error'); return; }
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isAiStage = (stage === 2 && (group === 'A' || group === 'C')) || (stage === 3 && group === 'B');
+          if (!isAiStage) { setStatus('AI 피드백 단계에서만 사용할 수 있습니다.', 'warn'); return; }
+          const input = $('aiInput');
+          if (!input || input.disabled) return;
+          const text = input.value.trim();
+          if (!text) return;
+          input.value = '';
+          const localMessage = { ts: Date.now(), role: 'user', senderId: state.user.id, senderName: state.user.name, text: text };
+          const appended = appendChatMessage('ai', localMessage, { pending: true });
+          setAiPending(true);
+          setAiLoading(true);
+        google.script.run.withSuccessHandler(function(res){
+            if (appended && appended.tempId && res && typeof res.ts === 'number') {
+              confirmChatMessage('ai', appended.tempId, res.ts, localMessage);
+            }
+            pollAiMessages();
+          google.script.run.withSuccessHandler(function(ai){
+              if (ai && ai.text) pollAiMessages();
+            }).withFailureHandler(function(err){
+              setAiLoading(false);
+              setAiPending(false);
+              handleError(err);
+            }).requestAiIfNeeded(state.aiChat.sessionId, state.group, text, '', { channel: 'ai-feedback', sessionKey: state.sessionKey });
+          }).withFailureHandler(function(err){
+            setAiLoading(false);
+            setAiPending(false);
+            if (appended && appended.element) appended.element.classList.add('error');
+            handleError(err);
+          }).postMessage(state.aiChat.sessionId, state.group, state.user.id, state.user.name, 'user', text, { channel: 'ai-feedback', sessionKey: state.sessionKey });
+        }
+
+        function setAiLoading(flag){
+          const loader = $('aiChatLoader');
+          if (loader) loader.style.display = flag ? 'flex' : 'none';
+          if (flag) {
+            $('btnAiSend').disabled = true;
+          } else {
+            refreshChatControls();
+          }
+        }
+
+        function sendPeerMessage(){
+          if (!hasGas || !state.peerChat.sessionId) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isPeerStage = (stage === 2 && group === 'B') || (stage === 3 && group === 'A');
+          if (!isPeerStage) { setStatus('동료 협업 단계에서만 사용할 수 있습니다.', 'warn'); return; }
+          const input = $('peerInput');
+          if (!input || input.disabled) return;
+          const text = input.value.trim();
+          if (!text) return;
+          input.value = '';
+          const local = { ts: Date.now(), role: 'user', senderId: state.user.id, senderName: state.user.name, text: text };
+          const appended = appendChatMessage('peer', local, { pending: true });
+        google.script.run.withSuccessHandler(function(res){
+            if (appended && appended.tempId && res && typeof res.ts === 'number') {
+              confirmChatMessage('peer', appended.tempId, res.ts, local);
+            }
+            pollPeerMessages();
+          }).withFailureHandler(function(err){
+            if (appended && appended.element) appended.element.classList.add('error');
+            handleError(err);
+          }).postMessage(state.peerChat.sessionId, state.group, state.user.id, state.user.name, 'user', text, { channel: 'peer-chat', sessionKey: state.sessionKey });
+        }
+
+        function appendChatMessage(channel, message, options){
+          const chatState = channel === 'ai' ? state.aiChat : state.peerChat;
+          const logEl = $(channel === 'ai' ? 'aiChatLog' : 'peerChatLog');
+          if (!chatState || !logEl) return null;
+          const isPending = options && options.pending;
+          const ts = Number(message.ts || Date.now());
+          if (!isPending) {
+            if (chatState.pending && Object.keys(chatState.pending).length) {
+              let matchedTempId = '';
+              Object.keys(chatState.pending).forEach(function(tempId){
+                if (matchedTempId) return;
+                const pendingNode = chatState.pending[tempId];
+                if (!pendingNode) return;
+                const pendingSender = pendingNode.dataset.senderId || '';
+                if (String(pendingSender) !== String(message.senderId || '')) return;
+                const bubbleEl = pendingNode.querySelector('.chat-bubble');
+                if (!bubbleEl) return;
+                if (bubbleEl.textContent === (message.text || '')) {
+                  matchedTempId = tempId;
+                }
+              });
+              if (matchedTempId) {
+                const pendingNode = chatState.pending[matchedTempId];
+                delete chatState.pending[matchedTempId];
+                pendingNode.classList.remove('pending');
+                if (ts) pendingNode.dataset.ts = String(ts);
+                const metaEl = pendingNode.querySelector('.chat-meta');
+                if (metaEl) metaEl.textContent = buildChatMeta(channel, message, ts, false);
+                chatState.rendered[ts] = true;
+                if (ts > chatState.lastTs) chatState.lastTs = ts;
+                if (channel === 'ai' && message.role === 'ai') {
+                  setAiPending(false);
+                  setAiLoading(false);
+                }
+                return { tempId: matchedTempId, element: pendingNode };
+              }
+            }
+            if (chatState.rendered[ts]) return null;
+            chatState.rendered[ts] = true;
+            if (ts > chatState.lastTs) chatState.lastTs = ts;
+          }
+          const tempId = isPending ? ('tmp-' + Date.now() + '-' + Math.random().toString(16).slice(2)) : '';
+          const wrapper = document.createElement('div');
+          wrapper.className = 'chat-line';
+          if (isPending) wrapper.classList.add('pending');
+          const role = message.role || 'user';
+          wrapper.dataset.role = role;
+          wrapper.dataset.senderName = message.senderName || '';
+          wrapper.dataset.senderId = message.senderId || '';
+          if (role === 'system') {
+            wrapper.classList.add('system');
+          } else if (role === 'ai') {
+            wrapper.classList.add('ai');
+          } else if (String(message.senderId || '') === String(state.user.id || '')) {
+            wrapper.classList.add('me');
+          } else {
+            wrapper.classList.add('other');
+          }
+          if (tempId) wrapper.dataset.tempId = tempId;
+          if (!isPending && ts) wrapper.dataset.ts = String(ts);
+          const bubble = document.createElement('div');
+          bubble.className = 'chat-bubble';
+          bubble.textContent = message.text || '';
+          const meta = document.createElement('div');
+          meta.className = 'chat-meta';
+          meta.textContent = buildChatMeta(channel, message, ts, isPending);
+          const contentWrap = document.createElement('div');
+          contentWrap.className = 'chat-content';
+          contentWrap.appendChild(bubble);
+          contentWrap.appendChild(meta);
+          const avatarUrl = role === 'ai' ? (state.aiAvatarUrl || publicConfig.aiAvatarUrl || '') : '';
+          if (avatarUrl) {
+            const avatar = document.createElement('div');
+            avatar.className = 'chat-avatar';
+            avatar.style.backgroundImage = `url('${avatarUrl}')`;
+            wrapper.appendChild(avatar);
+            wrapper.classList.add('with-avatar');
+          }
+          wrapper.appendChild(contentWrap);
+          logEl.appendChild(wrapper);
+          logEl.scrollTop = logEl.scrollHeight;
+          if (!isPending && channel === 'ai' && role === 'ai') {
+            setAiPending(false);
+            setAiLoading(false);
+          }
+          if (isPending) {
+            chatState.pending[tempId] = wrapper;
+          }
+          return { tempId: tempId, element: wrapper };
+        }
+
+        function confirmChatMessage(channel, tempId, serverTs, original){
+          const chatState = channel === 'ai' ? state.aiChat : state.peerChat;
+          if (!chatState || !chatState.pending) return;
+          const el = chatState.pending[tempId];
+          if (!el) return;
+          delete chatState.pending[tempId];
+          el.classList.remove('pending');
+          el.dataset.ts = String(serverTs);
+          chatState.rendered[serverTs] = true;
+          chatState.lastTs = Number(serverTs) || chatState.lastTs;
+          const meta = el.querySelector('.chat-meta');
+          if (meta) {
+            meta.textContent = buildChatMeta(channel, original || { role: 'user', senderName: state.user.name, senderId: state.user.id }, serverTs, false);
+          }
+        }
+
+        function buildChatMeta(channel, message, ts, pending){
+          let name = '';
+          if (message.role === 'ai') name = channel === 'ai' ? 'AI 튜터' : 'AI';
+          else if (message.role === 'system') name = '시스템';
+          else name = message.senderName || message.senderId || '사용자';
+          return name + ' · ' + (pending ? '전송 중...' : formatTime(ts));
+        }
+
+        function pollAiMessages(){
+          if (!hasGas || !state.aiChat.sessionId) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isAiStage = (stage === 2 && (group === 'A' || group === 'C')) || (stage === 3 && group === 'B');
+          if (!isAiStage) return;
+          if (state.aiChat.fetching) return;
+          state.aiChat.fetching = true;
+          google.script.run.withSuccessHandler(function(list){
+            state.aiChat.fetching = false;
+            if (!Array.isArray(list)) return;
+            list.forEach(function(msg){ appendChatMessage('ai', msg, { pending: false }); });
+          }).withFailureHandler(function(err){
+            state.aiChat.fetching = false;
+            console.error(err);
+          }).getMessages(state.aiChat.sessionId, state.aiChat.lastTs, 'ai-feedback');
+        }
+
+        function startAiPolling(){
+          if (state.timers.ai) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isAiStage = (stage === 2 && (group === 'A' || group === 'C')) || (stage === 3 && group === 'B');
+          if (!isAiStage) return;
+          state.timers.ai = setInterval(pollAiMessages, 5000);
+          pollAiMessages();
+        }
+
+        function stopAiPolling(){
+          if (state.timers.ai) {
+            clearInterval(state.timers.ai);
+            state.timers.ai = null;
+          }
+        }
+
+        function pollPeerMessages(){
+          if (!hasGas || !state.peerChat.sessionId) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isPeerStage = (stage === 2 && group === 'B') || (stage === 3 && group === 'A');
+          if (!isPeerStage) return;
+          if (state.peerChat.fetching) return;
+          state.peerChat.fetching = true;
+          google.script.run.withSuccessHandler(function(list){
+            state.peerChat.fetching = false;
+            if (!Array.isArray(list)) return;
+            list.forEach(function(msg){ appendChatMessage('peer', msg, { pending: false }); });
+          }).withFailureHandler(function(err){
+            state.peerChat.fetching = false;
+            console.error(err);
+          }).getMessages(state.peerChat.sessionId, state.peerChat.lastTs, 'peer-chat');
+        }
+
+        function startPeerPolling(){
+          if (state.timers.peer) return;
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isPeerStage = (stage === 2 && group === 'B') || (stage === 3 && group === 'A');
+          if (!isPeerStage) return;
+          state.timers.peer = setInterval(pollPeerMessages, 5000);
+          pollPeerMessages();
+        }
+
+        function stopPeerPolling(){
+          if (state.timers.peer) {
+            clearInterval(state.timers.peer);
+            state.timers.peer = null;
+          }
+        }
+
+        function refreshSessionState(){
+          if (!hasGas || !state.sessionKey || state.refreshingState) return;
+          state.refreshingState = true;
+        google.script.run.withSuccessHandler(function(res){
+            state.refreshingState = false;
+            syncSessionState(res);
+          }).withFailureHandler(function(err){
+            state.refreshingState = false;
+            console.error(err);
+          }).getSessionState(state.sessionKey);
+        }
+
+        function startStatePolling(){
+          if (state.timers.state) return;
+          state.timers.state = setInterval(refreshSessionState, 5000);
+        }
+
+        function startPresencePing(){
+          if (state.timers.presence) return;
+          state.timers.presence = setInterval(sendPresencePing, 10000);
+        }
+
+        function sendPresencePing(){
+          if (!hasGas || !state.sessionKey) return;
+          try { google.script.run.touchPresence(state.sessionKey); } catch (e) { console.error(e); }
+        }
+
+        function ensurePollers(){
+          if (!state.sessionKey) return;
+          startStatePolling();
+          startPresencePing();
+          const stage = Number(state.stage || 1);
+          const group = (state.group || '').toUpperCase();
+          const isAiStage = (stage === 2 && (group === 'A' || group === 'C')) || (stage === 3 && group === 'B');
+          const isPeerStage = (stage === 2 && group === 'B') || (stage === 3 && group === 'A');
+          if (isAiStage && state.aiChat.sessionId) startAiPolling(); else stopAiPolling();
+          if (isPeerStage && state.peerChat.sessionId) startPeerPolling(); else stopPeerPolling();
+          if (stage >= 4) {
+            stopAiPolling();
+            stopPeerPolling();
+          }
+        }
+
+        function clearAllTimers(){
+          ['ai','peer','state','presence'].forEach(function(key){
+            if (state.timers[key]) {
+              clearInterval(state.timers[key]);
+              state.timers[key] = null;
+            }
+          });
+        }
+
+        function clearChatLog(channel){
+          const logEl = $(channel === 'ai' ? 'aiChatLog' : 'peerChatLog');
+          if (logEl) logEl.innerHTML = '';
+          const chatState = channel === 'ai' ? state.aiChat : state.peerChat;
+          chatState.lastTs = 0;
+          chatState.rendered = {};
+          chatState.pending = {};
+          chatState.fetching = false;
+          if (channel === 'ai') {
+            chatState.awaitingResponse = false;
+          }
+        }
+
+        function setStatus(message, type){
+          state.status = { message: message, type: type || 'info' };
+          const bar = $('statusBar');
+          if (!bar) return;
+          bar.textContent = message;
+          bar.className = 'status-bar ' + (type || 'info');
+        }
+
+        function handleError(err){
+          const msg = err && err.message ? err.message : (typeof err === 'string' ? err : '알 수 없는 오류가 발생했습니다.');
+          console.error(err);
+          setStatus(msg, 'error');
+        }
+
+        function formatDate(ms){
+          if (!ms) return '';
+          return new Date(ms).toLocaleString('ko-KR', { hour12: false });
+        }
+
+        function formatTime(ms){
+          if (!ms) return '';
+          return new Date(ms).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatStageName(step){
+          const group = (state.group || '').toUpperCase();
+          switch (Number(step)) {
+            case 1: return '1단계 사전 글쓰기';
+            case 2: return group === 'B' ? '2단계 동료 피드백' : '2단계 AI 피드백';
+            case 3: return '3단계 글쓰기 수정 관련 추가 메모';
+            case 4: return '4단계 최종 수정 및 제출';
+            default: return step + '단계';
+          }
+        }
+
+        function describePresence(info){
+          if (!info) return '오프라인';
+          if (info.online) return '온라인 · ' + formatRelative(info.lastSeen || Date.now());
+          if (info.lastSeen) return '오프라인 · 마지막 접속 ' + formatRelative(info.lastSeen);
+          return '오프라인';
+        }
+
+        function formatRelative(ms){
+          if (!ms) return '';
+          const diff = Date.now() - ms;
+          if (diff < 0) return '방금';
+          const seconds = Math.floor(diff / 1000);
+          if (seconds < 60) return '방금';
+          const minutes = Math.floor(seconds / 60);
+          if (minutes < 60) return minutes + '분 전';
+          const hours = Math.floor(minutes / 60);
+          if (hours < 24) return hours + '시간 전';
+          const days = Math.floor(hours / 24);
+          return days + '일 전';
+        }
+
+        function loadPublicSettings(){
+          if (!hasGas) return;
+          try {
+            google.script.run.withSuccessHandler(function(cfg){
+              if (!cfg) return;
+              publicConfig.aiAvatarUrl = cfg.aiAvatarUrl || '';
+              publicConfig.promptContent = cfg.promptContent || '';
+              state.aiAvatarUrl = publicConfig.aiAvatarUrl;
+              const promptEl = $('promptContent');
+              if (promptEl) {
+                promptEl.textContent = publicConfig.promptContent || '제시문이 아직 등록되지 않았습니다.';
+              }
+            }).getPublicSettings();
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        init();
+      })();
+    </script>
+  </body>
+</html>
+
+ 

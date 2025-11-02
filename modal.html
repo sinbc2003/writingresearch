@@ -1,0 +1,33 @@
+<template id="tpl-clear-modal">
+  <div style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35);">
+    <div style="background:#fff; padding:18px; border-radius:10px; width:360px; border:1px solid #e6e6ef;">
+      <div style="font-weight:600; margin-bottom:8px;">초기화 요청</div>
+      <div style="font-size:14px; color:#444;">상대가 초기화를 요청했습니다. 확인하시겠습니까?</div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
+        <button class="secondary" onclick="closeModal()">취소</button>
+        <button class="primary" onclick="confirmClear()">확인</button>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+  function openClearModal(){
+    const t = document.getElementById('tpl-clear-modal');
+    const node = t.content.cloneNode(true);
+    document.body.appendChild(node);
+  }
+  function closeModal(){
+    const overlay = Array.from(document.body.children).find(function(el){ return el.style && el.style.position === 'fixed' && el.style.inset === '0px'; });
+    if (overlay) overlay.remove();
+  }
+  function confirmClear(){
+    if (!window.state || !state.sessionId) return;
+    google.script.run.withSuccessHandler(function(){
+      closeModal();
+      document.getElementById('chat').innerHTML='';
+      state.lastTs = 0; state.renderedTs = {};
+    }).clearSession(state.sessionId);
+  }
+</script>
+
+

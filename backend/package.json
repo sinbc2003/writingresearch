@@ -1,0 +1,27 @@
+{
+  "name": "writingresearch-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Cloud Run backend for the Writing Research platform",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon --watch src --ext js,mjs --exec node src/server.js"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "http-errors": "^2.0.0",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.1",
+    "@google-cloud/storage": "^7.10.0",
+    "@google-cloud/vertexai": "^0.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
+
