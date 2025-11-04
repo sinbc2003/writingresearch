@@ -33,6 +33,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(morgan('combined'));
 
 const CHAT_AVATAR_FILE = 'chatgpt.png';
+const PUBLIC_DIR = path.resolve(process.cwd(), 'public');
 await fs.mkdir(PUBLIC_DIR, { recursive: true });
 const publicAvatarPath = path.join(PUBLIC_DIR, CHAT_AVATAR_FILE);
 try {
@@ -62,7 +63,6 @@ await adminService.initialize();
 const sessionService = createSessionService(dataStore);
 const chatService = createChatService(dataStore, aiResponder);
 const dictionaryService = createDictionaryService(config);
-const PUBLIC_DIR = path.resolve(process.cwd(), 'public');
 
 function requireApiKey(req, res, next) {
   if (!config.apiKey) return next();
