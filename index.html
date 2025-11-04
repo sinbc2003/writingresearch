@@ -6,9 +6,10 @@
     <title>영어 글쓰기 워크스페이스</title>
     <style>
       *, *::before, *::after { box-sizing: border-box; }
-      body { margin: 0; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6fb; color: #1f2937; }
+      html, body { height: 100%; }
+      body { margin: 0; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6fb; color: #1f2937; overflow: hidden; }
       textarea, input, button { font-family: inherit; }
-      .page-container { max-width: 1200px; margin: 0 auto; padding: 32px 20px 48px; display: flex; flex-direction: column; gap: 20px; }
+      .page-container { max-width: 1200px; margin: 0 auto; padding: 12px 20px 16px; display: flex; flex-direction: column; gap: 12px; height: 100%; box-sizing: border-box; overflow: hidden; }
       .card { background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); }
       .hero-card { text-align: center; }
       .hero-card h1 { margin: 0 0 12px; font-size: 26px; font-weight: 700; color: #111827; }
@@ -37,15 +38,15 @@
       .link-button { background: none; border: none; color: #2563eb; font-weight: 600; padding: 8px 12px; border-radius: 8px; }
       .link-button:hover { background: rgba(37, 99, 235, 0.1); }
       .login-actions { display: flex; gap: 12px; justify-content: flex-end; }
-      .workspace { display: none; flex-direction: column; gap: 18px; }
-      .workspace-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      .workspace { display: none; flex-direction: column; gap: 12px; flex: 1; overflow: hidden; }
+      .workspace-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 0; }
       .user-info { font-size: 14px; font-weight: 600; color: #475569; }
-      .status-bar { padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5f5; background: #eef2ff; color: #1e3a8a; font-size: 14px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+      .status-bar { padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5f5; background: #eef2ff; color: #1e3a8a; font-size: 13px; line-height: 1.4; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
       .status-bar.success { border-color: #bbf7d0; background: #ecfdf5; color: #047857; }
       .status-bar.warn { border-color: #fde68a; background: #fef3c7; color: #92400e; }
       .status-bar.error { border-color: #fecaca; background: #fee2e2; color: #b91c1c; }
-      .step-indicator { display: flex; gap: 16px; flex-wrap: wrap; }
-      .step-item { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+      .step-indicator { display: flex; gap: 12px; flex-wrap: wrap; }
+      .step-item { flex: 1; min-width: 150px; display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
       .step-number { width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0; color: #1f2937; display: flex; align-items: center; justify-content: center; font-weight: 700; }
       .step-info { display: flex; flex-direction: column; gap: 2px; }
       .step-title { font-size: 14px; font-weight: 700; color: #1f2937; }
@@ -54,9 +55,11 @@
       .step-item.active .step-number { background: #2563eb; color: #ffffff; }
       .step-item.completed { border-color: #bbf7d0; }
       .step-item.completed .step-number { background: #10b981; color: #ffffff; }
-      .workspace-grid { display: grid; gap: 20px; grid-template-columns: 1.1fr 0.9fr; }
-      .left-column, .right-column { display: flex; flex-direction: column; gap: 16px; }
-      .stage-panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+      .workspace-grid { display: grid; gap: 16px; grid-template-columns: 1.1fr 0.9fr; flex: 1; min-height: 0; }
+      .left-column, .right-column { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+      .left-column { overflow-y: auto; padding-right: 6px; }
+      .right-column { overflow: hidden; }
+      .stage-panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
       .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
       .panel-header h2 { font-size: 18px; font-weight: 700; margin: 0; color: #111827; }
       .panel-subtext { font-size: 13px; color: #64748b; }
@@ -64,7 +67,7 @@
       .text-block { padding: 12px; border-radius: 10px; border: 1px solid #d8dee9; background: #f8fafc; font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: #1f2937; }
       .button-row { display: flex; gap: 10px; justify-content: flex-end; }
       .meta-info { font-size: 12px; color: #64748b; }
-      .right-panel { display: none; flex-direction: column; gap: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; min-height: 360px; }
+      .right-panel { display: none; flex-direction: column; gap: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; min-height: 360px; flex: 1; min-height: 0; overflow: hidden; }
       .dictionary-search { display: flex; gap: 10px; }
       .dictionary-result { padding: 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; display: flex; flex-direction: column; gap: 8px; }
       .dict-word { font-size: 18px; font-weight: 700; color: #111827; }
@@ -82,7 +85,7 @@
       .history-item .time { margin-left: auto; color: #94a3b8; font-size: 12px; }
       .prewriting-preview-block { display: flex; flex-direction: column; gap: 6px; }
       .prewriting-preview-block strong { font-size: 13px; color: #475569; }
-      .chat-log { flex: none; height: clamp(420px, 55vh, 520px); border: 1px solid #d0d7e3; border-radius: 12px; background: radial-gradient(circle at top, #f8fafc 0%, #ffffff 48%); padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+      .chat-log { flex: 1; min-height: 0; border: 1px solid #d0d7e3; border-radius: 12px; background: radial-gradient(circle at top, #f8fafc 0%, #ffffff 48%); padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
       .chat-line { display: flex; flex-direction: column; gap: 4px; max-width: 80%; }
       .chat-line.me { align-self: flex-end; text-align: right; }
       .chat-line.ai, .chat-line.other { align-self: flex-start; }
@@ -95,8 +98,9 @@
       .chat-line.me .chat-meta { align-self: flex-end; }
       .chat-line.pending .chat-meta::after { content: ' · 전송 중'; color: #f97316; }
       .chat-line.error .chat-bubble { border: 1px solid #f87171; }
-      .chat-input { display: flex; flex-direction: column; gap: 10px; }
-      .chat-input textarea { height: 120px; min-height: 120px; max-height: 120px; resize: none; overflow-y: auto; }
+      .chat-input { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+      .chat-input textarea { height: 96px; min-height: 96px; max-height: 96px; resize: none; overflow-y: auto; }
+      #aiInput { height: 72px; min-height: 72px; max-height: 72px; }
       #notesInput { min-height: 90px; height: 90px; }
       #finalInput { min-height: 260px; }
       .chat-actions { display: flex; justify-content: flex-end; gap: 10px; }
@@ -116,12 +120,14 @@
         .right-column { order: -1; }
       }
       @media (max-width: 640px) {
-        .page-container { padding: 24px 14px 36px; }
+        .page-container { padding: 12px 14px 16px; }
         .group-buttons { flex-direction: column; }
         .login-actions { flex-direction: column; align-items: stretch; }
         .step-item { min-width: 100%; }
-        .chat-log { height: clamp(300px, 60vh, 360px); }
-        .chat-input textarea { height: 100px; min-height: 100px; max-height: 100px; }
+        .chat-log { max-height: none; }
+        .left-column { padding-right: 0; }
+        .chat-input textarea { height: 90px; min-height: 90px; max-height: 90px; }
+        #aiInput { height: 68px; min-height: 68px; max-height: 68px; }
         #finalInput { min-height: 200px; }
       }
       .chat-line.me .chat-content { align-items: flex-end; }
