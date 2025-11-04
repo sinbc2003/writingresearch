@@ -54,10 +54,55 @@ export function createChatService(dataStore, aiResponder) {
       return { ok: false, reason: 'ai_disabled' };
     }
     const history = await dataStore.getChatHistory(sessionId, 'ai');
+    let enrichedContext = context;
+    const sessionKey = metadata && metadata.sessionKey ? String(metadata.sessionKey).trim() : '';
+    if (sessionKey && typeof dataStore.getSession === 'function') {
+      try {
+        const session = await dataStore.getSession(sessionKey);
+        const prewritingText = session?.writing?.prewriting?.text || session?.prewriting?.text || '';
+        if (prewritingText) {
+          const baseContext = typeof context === 'object' && context !== null ? context : {};
+          enrichedContext = {
+            ...baseContext,
+            prewritingText
+          };
+        }
+        if (session?.writing?.draft?.text) {
+          const baseContext = typeof enrichedContext === 'object' && enrichedContext !== null ? enrichedContext : {};
+          enrichedContext = {
+            ...baseContext,
+            stage2MemoText: session.writing.draft.text
+          };
+        }
+        if (session?.writing?.notes?.text) {
+          const baseContext = typeof enrichedContext === 'object' && enrichedContext !== null ? enrichedContext : {};
+          enrichedContext = {
+            ...baseContext,
+            stage3NotesText: session.writing.notes.text
+          };
+        }
+        if (session?.writing?.final?.text) {
+          const baseContext = typeof enrichedContext === 'object' && enrichedContext !== null ? enrichedContext : {};
+          enrichedContext = {
+            ...baseContext,
+            finalDraftText: session.writing.final.text
+          };
+        }
+        if (session?.presence?.self?.stage) {
+          const baseContext = typeof enrichedContext === 'object' && enrichedContext !== null ? enrichedContext : {};
+          enrichedContext = {
+            ...baseContext,
+            currentStage: session.presence.self.stage
+          };
+        }
+      } catch (error) {
+        console.warn('세션 컨텍스트 로드 실패', error);
+      }
+    }
     const responseText = await aiResponder.generateReply({
       group,
       userMessage,
-      context,
+      context: enrichedContext,
       history
     });
     if (!responseText) {

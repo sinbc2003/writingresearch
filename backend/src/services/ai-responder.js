@@ -65,6 +65,75 @@ function mergeAiConfig(baseAi, overrideAi) {
   return merged;
 }
 
+const MAX_CONTEXT_CHARS = 4000;
+
+function normalizeSystemPromptSection(section) {
+  if (section === undefined || section === null) return '';
+  const trimmed = String(section).trim();
+  return trimmed;
+}
+
+function limitContextText(text) {
+  if (!text) return '';
+  const trimmed = String(text).trim();
+  if (!trimmed) return '';
+  if (trimmed.length <= MAX_CONTEXT_CHARS) return trimmed;
+  return `${trimmed.slice(0, MAX_CONTEXT_CHARS)}…`;
+}
+
+function buildContextPrompt(context) {
+  if (!context) return '';
+  if (typeof context === 'string') {
+    return normalizeSystemPromptSection(context);
+  }
+  const parts = [];
+  ['systemPrompt', 'systemPromptPrefix', 'systemPromptSuffix'].forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(context, key)) {
+      const value = normalizeSystemPromptSection(context[key]);
+      if (value) parts.push(value);
+    }
+  });
+  if (Array.isArray(context.promptSegments)) {
+    context.promptSegments.forEach((segment) => {
+      const value = normalizeSystemPromptSection(segment);
+      if (value) parts.push(value);
+    });
+  }
+  if (context.prewritingText) {
+    const limited = limitContextText(context.prewritingText);
+    if (limited) {
+      parts.push(`학생이 1단계에서 제출한 초안:\n${limited}`);
+    }
+  }
+  if (context.stage2MemoText) {
+    const limited = limitContextText(context.stage2MemoText);
+    if (limited) {
+      parts.push(`학생이 2단계에서 정리한 메모:\n${limited}`);
+    }
+  }
+  if (context.stage3NotesText) {
+    const limited = limitContextText(context.stage3NotesText);
+    if (limited) {
+      parts.push(`학생이 3단계에서 작성한 추가 메모:\n${limited}`);
+    }
+  }
+  if (context.finalDraftText) {
+    const limited = limitContextText(context.finalDraftText);
+    if (limited) {
+      parts.push(`학생의 최종 제출 초안:\n${limited}`);
+    }
+  }
+  if (context.currentStage) {
+    const stageLabel = Number(context.currentStage) ? `현재 단계: ${context.currentStage}` : String(context.currentStage);
+    parts.push(stageLabel);
+  }
+  if (Object.prototype.hasOwnProperty.call(context, 'raw')) {
+    const value = normalizeSystemPromptSection(context.raw);
+    if (value) parts.push(value);
+  }
+  return parts.filter(Boolean).join('\n\n');
+}
+
 function buildOpenAiMessages(history, userMessage, systemPrompt) {
   const messages = [];
   if (systemPrompt && systemPrompt.trim()) {
@@ -100,7 +169,7 @@ export function createAiResponder(baseConfig) {
     return { ai: merged };
   }
 
-  async function generateReply({ userMessage, history }) {
+  async function generateReply({ userMessage, history, context }) {
     if (!userMessage || !userMessage.trim()) {
       return '';
     }
@@ -110,6 +179,11 @@ export function createAiResponder(baseConfig) {
     }
 
     const temperature = ai.temperature ?? 0.6;
+    const contextPrompt = buildContextPrompt(context);
+    const combinedSystemPrompt = [ai.systemPrompt, contextPrompt]
+      .map((part) => normalizeSystemPromptSection(part))
+      .filter(Boolean)
+      .join('\n\n');
 
     if (ai.provider === 'openai' && ai.openai?.apiKey) {
       try {
@@ -117,7 +191,7 @@ export function createAiResponder(baseConfig) {
         if (ai.openai.baseUrl) clientOptions.baseURL = ai.openai.baseUrl;
         if (ai.openai.organization) clientOptions.organization = ai.openai.organization;
         const openai = new OpenAI(clientOptions);
-        const messages = buildOpenAiMessages(history, userMessage, ai.systemPrompt);
+        const messages = buildOpenAiMessages(history, userMessage, combinedSystemPrompt);
         const response = await openai.chat.completions.create({
           model: ai.openai.model || 'gpt-4o-mini',
           messages,
@@ -141,7 +215,7 @@ export function createAiResponder(baseConfig) {
         const generativeModel = vertexAI.preview.getGenerativeModel({
           model: ai.model,
           systemInstruction: {
-            parts: [{ text: ai.systemPrompt || baseAi.systemPrompt || '' }]
+            parts: [{ text: combinedSystemPrompt || baseAi.systemPrompt || '' }]
           }
         });
         const contents = buildVertexContents(history, userMessage);
