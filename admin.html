@@ -810,7 +810,8 @@
           }
         }
 
-        async function loadSessions(){
+        async function loadSessions(options = {}){
+          const { skipAutoPairing = false } = options;
           const data = await apiRequest('sessions');
           const list = data?.sessions || [];
           const tbody = $('sessionTable').querySelector('tbody');
@@ -894,6 +895,29 @@
           }
           updateSessionActionButtons();
           syncSessionSelectAllState();
+          if (!skipAutoPairing && pendingPairings.length && !pairingApplyInProgress) {
+            const snapshot = pendingPairings.slice();
+            const { pending: remaining, applied } = await applyPairingsFromCsv(snapshot, {
+              showStatus: false,
+              refreshSessions: false
+            });
+            setPendingPairings(remaining);
+            if (applied) {
+              await loadSessions({ skipAutoPairing: true });
+              if (!remaining.length) {
+                setStatus('대기 중이던 동료 매칭을 자동으로 완료했습니다.', 'success');
+              } else {
+                setStatus(`동료 매칭 ${applied}쌍을 자동으로 완료했고 남은 대기 ${remaining.length}쌍이 있습니다.`, 'warn');
+              }
+              return;
+            } else if (remaining.length < snapshot.length) {
+              if (!remaining.length) {
+                setStatus('대기 중이던 동료 매칭이 모두 이미 연결되어 있습니다.', '');
+              } else {
+                setStatus(`동료 매칭 자동 확인 결과, 남은 대기 ${remaining.length}쌍이 있습니다.`, 'warn');
+              }
+            }
+          }
         }
 
         async function selectSession(sessionKey){
@@ -1042,11 +1066,13 @@
         $('rosterFileInput').addEventListener('change', handleRosterFileInput);
         $('btnApplyCsvPairings').addEventListener('click', async () => {
           if (!pendingPairings.length) return;
-          const remaining = await applyPairingsFromCsv(pendingPairings);
+          const { pending: remaining, applied } = await applyPairingsFromCsv(pendingPairings);
           setPendingPairings(remaining);
           if (remaining.length) {
             const ids = remaining.map((pair) => `${pair.primary.id}↔${pair.partner.id}`).join(', ');
             setStatus(`아직 매칭되지 않은 쌍이 있습니다: ${ids}`, 'warn');
+          } else if (!applied) {
+            setStatus('적용할 동료 매칭이 없습니다.', '');
           }
         });
         $('btnRosterClear').addEventListener('click', clearRoster);
@@ -1404,12 +1430,18 @@
           setQuickMatchField('partner', '');
         }
 
-        async function applyPairingsFromCsv(pairings, { showStatus = true } = {}){
-          if (!Array.isArray(pairings) || !pairings.length) return [];
-          if (pairingApplyInProgress) return pairings;
+        async function applyPairingsFromCsv(pairings, { showStatus = true, refreshSessions = true } = {}){
+          if (!Array.isArray(pairings) || !pairings.length) {
+            return { pending: [], applied: 0 };
+          }
+          if (pairingApplyInProgress) {
+            return { pending: pairings, applied: 0 };
+          }
           pairingApplyInProgress = true;
           try {
-            await loadSessions();
+            if (refreshSessions) {
+              await loadSessions({ skipAutoPairing: true });
+            }
             const pending = [];
             let applied = 0;
             for (const pair of pairings) {
@@ -1439,8 +1471,8 @@
                 pending.push(pair);
               }
             }
-            if (applied) {
-              await loadSessions();
+            if (applied && refreshSessions) {
+              await loadSessions({ skipAutoPairing: true });
             }
             if (showStatus) {
               if (applied && !pending.length) {
@@ -1451,7 +1483,7 @@
                 setStatus(`동료 매칭 적용 완료: ${applied}쌍, 대기: ${pending.length}쌍`, pending.length ? 'warn' : 'success');
               }
             }
-            return pending;
+            return { pending, applied };
           } finally {
             pairingApplyInProgress = false;
           }
@@ -2066,8 +2098,9 @@
                 let remaining = [];
                 let applied = 0;
                 try {
-                  remaining = await applyPairingsFromCsv(pairings, { showStatus: false });
-                  applied = pairings.length - remaining.length;
+                  const result = await applyPairingsFromCsv(pairings, { showStatus: false });
+                  remaining = result.pending;
+                  applied = result.applied;
                 } catch (error) {
                   console.error(error);
                   remaining = pairings;

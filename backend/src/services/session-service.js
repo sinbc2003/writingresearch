@@ -91,6 +91,33 @@ export function createSessionService(dataStore) {
     return rosterCache;
   }
 
+  async function findExistingSessionByStudentId(studentId) {
+    const target = normalizeIdForCompare(studentId);
+    if (!target) return null;
+    const keys = await dataStore.listSessions();
+    if (!keys.length) return null;
+    let candidate = null;
+    for (const key of keys) {
+      try {
+        const session = await dataStore.getSession(key);
+        if (!session?.you?.id) continue;
+        if (normalizeIdForCompare(session.you.id) !== target) continue;
+        if (!candidate) {
+          candidate = session;
+          continue;
+        }
+        const candidateUpdated = Number(candidate.updatedAt || candidate.createdAt || 0);
+        const sessionUpdated = Number(session.updatedAt || session.createdAt || 0);
+        if (sessionUpdated > candidateUpdated) {
+          candidate = session;
+        }
+      } catch (error) {
+        console.warn('기존 세션 조회 실패', error);
+      }
+    }
+    return candidate;
+  }
+
   async function ensureStudentAllowed(studentId, studentName) {
     const id = normalizeId(studentId);
     const name = normalizeName(studentName);
@@ -143,6 +170,32 @@ export function createSessionService(dataStore) {
   async function startSession({ group, studentId, studentName }) {
     const normalizedGroup = normalizeGroup(group);
     const verifiedStudent = await ensureStudentAllowed(studentId, studentName);
+    const existingSession = await findExistingSessionByStudentId(verifiedStudent.id);
+    if (existingSession) {
+      return dataStore.updateSession(existingSession.sessionKey, (session) => {
+        ensureWriting(session);
+        ensureSteps(session);
+        const now = Date.now();
+        session.mode = session.mode || normalizedGroup;
+        session.you = {
+          id: verifiedStudent.id,
+          name: verifiedStudent.name
+        };
+        session.presence = session.presence || {};
+        session.presence.self = {
+          ...(session.presence.self || {}),
+          online: true,
+          lastSeen: now,
+          stage: session.stage || 1,
+          name: verifiedStudent.name,
+          id: verifiedStudent.id
+        };
+        if (!session.aiSessionId) session.aiSessionId = existingSession.aiSessionId || uuid();
+        if (!session.peerSessionId) session.peerSessionId = existingSession.peerSessionId || uuid();
+        if (!session.createdAt) session.createdAt = existingSession.createdAt || now;
+        return session;
+      });
+    }
     const now = Date.now();
     const sessionKey = uuid();
     const aiSessionId = uuid();
