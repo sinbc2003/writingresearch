@@ -160,6 +160,31 @@ export function createSessionService(dataStore) {
     };
   }
 
+  async function updatePartnerMirrorPresence(session) {
+    if (!session?.partner) return;
+    const partnerInfo = session.partner;
+    let partnerSession = null;
+    if (partnerInfo.sessionKey) {
+      try {
+        partnerSession = await dataStore.getSession(partnerInfo.sessionKey);
+      } catch (error) {
+        partnerSession = null;
+      }
+    }
+    if (!partnerSession && partnerInfo.id) {
+      partnerSession = await findExistingSessionByStudentId(partnerInfo.id);
+    }
+    if (!partnerSession || partnerSession.sessionKey === session.sessionKey) return;
+    await dataStore.updateSession(partnerSession.sessionKey, (record) => {
+      record.presence = record.presence || {};
+      record.presence.partner = buildPartnerPresence(session, {
+        id: session.you?.id,
+        name: session.you?.name
+      });
+      return record;
+    });
+  }
+
   async function findExistingSessionByStudentId(studentId) {
     const target = normalizeIdForCompare(studentId);
     if (!target) return null;
@@ -354,7 +379,7 @@ export function createSessionService(dataStore) {
     const selfSnapshot = buildPartnerSnapshot(session, { id: session.you.id, name: session.you.name });
     const selfPresence = buildPartnerPresence(session, { id: session.you.id, name: session.you.name });
 
-    const [updatedSession] = await Promise.all([
+    const [updatedSession, updatedPartner] = await Promise.all([
       dataStore.updateSession(session.sessionKey, (record) => {
         ensureWriting(record);
         ensureSteps(record);
@@ -372,6 +397,8 @@ export function createSessionService(dataStore) {
         return record;
       })
     ]);
+    await updatePartnerMirrorPresence(updatedSession);
+    await updatePartnerMirrorPresence(updatedPartner);
     return updatedSession;
   }
 
@@ -517,7 +544,7 @@ export function createSessionService(dataStore) {
   }
 
   async function touchPresence(sessionKey) {
-    return dataStore.updateSession(sessionKey, (session) => {
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       const now = Date.now();
       session.presence = session.presence || {};
       session.presence.self = {
@@ -528,10 +555,12 @@ export function createSessionService(dataStore) {
       };
       return session;
     });
+    await updatePartnerMirrorPresence(updated);
+    return updated;
   }
 
   async function postPresenceLeave(sessionKey, userId, userName) {
-    return dataStore.updateSession(sessionKey, (session) => {
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       const now = Date.now();
       session.presence = session.presence || {};
       session.presence.self = {
@@ -544,6 +573,8 @@ export function createSessionService(dataStore) {
       };
       return session;
     });
+    await updatePartnerMirrorPresence(updated);
+    return updated;
   }
 
   async function getPublicSettings() {
