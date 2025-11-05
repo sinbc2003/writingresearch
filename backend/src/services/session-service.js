@@ -74,6 +74,38 @@ export function createSessionService(dataStore) {
     return String(value || '').trim();
   }
 
+  function buildFallbackPairings(students = []) {
+    const buckets = new Map();
+    (Array.isArray(students) ? students : []).forEach((student) => {
+      if (!student) return;
+      const id = normalizeId(student.id);
+      if (!id) return;
+      const name = normalizeName(student.name);
+      const groupKey = id.charAt(0).toUpperCase();
+      if (!buckets.has(groupKey)) buckets.set(groupKey, []);
+      buckets.get(groupKey).push({ id, name });
+    });
+    const seen = new Set();
+    const fallback = [];
+    for (const list of buckets.values()) {
+      for (let i = 0; i + 1 < list.length; i += 2) {
+        const first = list[i];
+        const second = list[i + 1];
+        const primaryKey = normalizeIdForCompare(first.id);
+        const partnerKey = normalizeIdForCompare(second.id);
+        if (!primaryKey || !partnerKey || primaryKey === partnerKey) continue;
+        const dedupeKey = [primaryKey, partnerKey].sort().join('|');
+        if (seen.has(dedupeKey)) continue;
+        seen.add(dedupeKey);
+        fallback.push({
+          primary: { id: first.id, name: first.name },
+          partner: { id: second.id, name: second.name }
+        });
+      }
+    }
+    return fallback;
+  }
+
   function normalizeRosterPairingsForCache(pairings = [], students = []) {
     const list = Array.isArray(pairings) ? pairings : [];
     const seen = new Set();
@@ -101,6 +133,18 @@ export function createSessionService(dataStore) {
           id: partnerId,
           name: normalizeName(entry.partner?.name || studentNameMap.get(partnerKey) || '')
         }
+      });
+    }
+    if (!normalized.length) {
+      const fallback = buildFallbackPairings(students);
+      fallback.forEach((pair) => {
+        const primaryKey = normalizeIdForCompare(pair.primary?.id);
+        const partnerKey = normalizeIdForCompare(pair.partner?.id);
+        if (!primaryKey || !partnerKey || primaryKey === partnerKey) return;
+        const key = [primaryKey, partnerKey].sort().join('|');
+        if (seen.has(key)) return;
+        seen.add(key);
+        normalized.push(pair);
       });
     }
     return normalized;
@@ -560,28 +604,98 @@ export function createSessionService(dataStore) {
 
   async function setPartner(sessionKey, payload = {}) {
     const { partnerSessionKey, partnerName, partnerId } = payload;
-    return dataStore.updateSession(sessionKey, async (session) => {
-      const info = {};
-      if (partnerSessionKey) {
-        const partnerSession = await dataStore.getSession(partnerSessionKey);
-        if (!partnerSession) {
-          throw createError(404, '동료 세션을 찾을 수 없습니다.');
-        }
-        info.sessionKey = partnerSession.sessionKey;
-        info.name = partnerSession.you?.name || '';
-        info.id = partnerSession.you?.id || '';
+    const session = await dataStore.getSession(sessionKey);
+    if (!session) {
+      throw createError(404, '세션을 찾을 수 없습니다.');
+    }
+
+    const normalizedPartnerKey = normalizeId(partnerSessionKey);
+    const normalizedPartnerId = normalizeId(partnerId);
+    let partnerSession = null;
+
+    if (normalizedPartnerKey) {
+      partnerSession = await dataStore.getSession(normalizedPartnerKey);
+      if (!partnerSession) {
+        throw createError(404, '동료 세션을 찾을 수 없습니다.');
       }
-      const manualAllowed = await ensurePartnerAllowed(partnerSessionKey, partnerId, partnerName);
-      if (manualAllowed) {
-        info.name = manualAllowed.name;
-        info.id = manualAllowed.id;
+    }
+
+    const manualAllowed = await ensurePartnerAllowed(partnerSessionKey, partnerId, partnerName);
+
+    if (!partnerSession && normalizedPartnerId) {
+      partnerSession = await findExistingSessionByStudentId(normalizedPartnerId);
+    }
+
+    if (partnerSession && partnerSession.sessionKey === session.sessionKey) {
+      throw createError(400, '본인 세션을 동료로 지정할 수 없습니다.');
+    }
+
+    if (!partnerSession) {
+      if (!manualAllowed) {
+        throw createError(404, '동료 세션을 찾을 수 없습니다.');
       }
-      if (!info.sessionKey && !info.name && !info.id) {
-        throw createError(400, '동료 정보를 입력하세요.');
-      }
-      session.partner = info;
-      return session;
-    });
+      const offlinePartner = {
+        sessionKey: '',
+        name: manualAllowed.name,
+        id: manualAllowed.id
+      };
+      const updated = await dataStore.updateSession(session.sessionKey, (record) => {
+        ensureWriting(record);
+        ensureSteps(record);
+        record.partner = offlinePartner;
+        record.presence = record.presence || {};
+        record.presence.partner = {
+          ...(record.presence.partner || {}),
+          sessionKey: '',
+          name: manualAllowed.name,
+          id: manualAllowed.id,
+          stage: 1,
+          online: false,
+          lastSeen: 0
+        };
+        return record;
+      });
+      return updated;
+    }
+
+    const fallbackInfo = manualAllowed || {
+      id: normalizedPartnerId,
+      name: normalizeName(partnerName)
+    };
+
+    const { sharedId, mergeSources } = await determineSharedPeerSessionId(session, partnerSession);
+    const partnerSnapshot = buildPartnerSnapshot(partnerSession, fallbackInfo || {});
+    const partnerPresence = buildPartnerPresence(partnerSession, fallbackInfo || {});
+    const selfSnapshot = buildPartnerSnapshot(session, { id: session.you?.id, name: session.you?.name });
+    const selfPresence = buildPartnerPresence(session, { id: session.you?.id, name: session.you?.name });
+
+    const [updatedSession, updatedPartner] = await Promise.all([
+      dataStore.updateSession(session.sessionKey, (record) => {
+        ensureWriting(record);
+        ensureSteps(record);
+        record.partner = partnerSnapshot;
+        record.presence = record.presence || {};
+        record.presence.partner = partnerPresence;
+        record.peerSessionId = sharedId;
+        return record;
+      }),
+      dataStore.updateSession(partnerSession.sessionKey, (record) => {
+        ensureWriting(record);
+        ensureSteps(record);
+        record.partner = selfSnapshot;
+        record.presence = record.presence || {};
+        record.presence.partner = selfPresence;
+        record.peerSessionId = sharedId;
+        return record;
+      })
+    ]);
+
+    if (mergeSources.length) {
+      await mergePeerChatHistories(sharedId, mergeSources);
+    }
+
+    await Promise.all([updatePartnerMirrorPresence(updatedSession), updatePartnerMirrorPresence(updatedPartner)]);
+    return updatedSession;
   }
 
   async function clearPartner(sessionKey) {
