@@ -393,9 +393,6 @@ export function createSessionService(dataStore) {
     const primarySession = await ensureSeedSession(primary, partner, sharedPeerId, primaryExisting);
     const partnerSession = await ensureSeedSession(partner, primary, sharedPeerId, partnerExisting);
 
-    if (primarySession) await ensureRosterPairing(primarySession);
-    if (partnerSession) await ensureRosterPairing(partnerSession);
-
     return {
       primarySessionKey: primarySession?.sessionKey || primaryExisting?.sessionKey || null,
       partnerSessionKey: partnerSession?.sessionKey || partnerExisting?.sessionKey || null,
