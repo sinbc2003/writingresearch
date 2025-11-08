@@ -237,7 +237,18 @@ export function createAdminRouter({ adminService, sessionService, chatService })
       if (typeof sessionService.reloadRosterCache === 'function') {
         sessionService.reloadRosterCache();
       }
-      res.json(roster);
+      let seeded = null;
+      if (typeof sessionService.seedRosterSessions === 'function') {
+        try {
+          seeded = await sessionService.seedRosterSessions({ forceReload: true });
+        } catch (error) {
+          console.warn('자동 세션 시드 실패', error);
+        }
+      }
+      res.json({
+        ...roster,
+        seededSessions: seeded ? seeded.processed : 0
+      });
     } catch (error) {
       next(error);
     }

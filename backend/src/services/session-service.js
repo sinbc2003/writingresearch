@@ -262,6 +262,167 @@ export function createSessionService(dataStore) {
     });
   }
 
+  function deriveGroupFromStudentId(studentId) {
+    const first = String(studentId || '').trim().charAt(0).toUpperCase();
+    if (['A', 'B', 'C'].includes(first)) {
+      return first;
+    }
+    return 'A';
+  }
+
+  function buildSeedSessionRecord(student, partner, peerSessionId) {
+    const now = Date.now();
+    const sessionKey = uuid();
+    const aiSessionId = uuid();
+    const group = deriveGroupFromStudentId(student.id);
+
+    return {
+      sessionKey,
+      mode: group,
+      createdAt: now,
+      updatedAt: now,
+      stage: 1,
+      you: {
+        id: normalizeId(student.id),
+        name: normalizeName(student.name)
+      },
+      writing: {
+        prewriting: { ...emptyWritingState() },
+        draft: { ...emptyWritingState() },
+        notes: { ...emptyWritingState() },
+        final: { ...emptyWritingState() }
+      },
+      steps: {
+        prewriting: { completed: false, submittedAt: 0 },
+        draft: { saved: false, savedAt: 0 },
+        notes: { saved: false, updatedAt: 0 },
+        final: { submitted: false, submittedAt: 0 }
+      },
+      partner: partner
+        ? {
+            sessionKey: '',
+            id: normalizeId(partner.id),
+            name: normalizeName(partner.name)
+          }
+        : null,
+      presence: {
+        self: {
+          online: false,
+          lastSeen: 0,
+          stage: 1,
+          id: normalizeId(student.id),
+          name: normalizeName(student.name)
+        },
+        partner: partner
+          ? {
+              sessionKey: '',
+              id: normalizeId(partner.id),
+              name: normalizeName(partner.name),
+              stage: 1,
+              online: false,
+              lastSeen: 0
+            }
+          : null
+      },
+      aiSessionId,
+      peerSessionId: peerSessionId || uuid()
+    };
+  }
+
+  async function ensureSeedSession(student, partner, peerSessionId, existingSession = null) {
+    const studentId = normalizeId(student?.id);
+    if (!studentId) return null;
+    const normalizedPartner = partner
+      ? {
+          id: normalizeId(partner.id),
+          name: normalizeName(partner.name)
+        }
+      : null;
+
+    const existing = existingSession || (await findExistingSessionByStudentId(studentId));
+    if (existing) {
+      let mutated = existing;
+      const existingPartnerId = normalizeIdForCompare(existing?.partner?.id || '');
+      const desiredPartnerId = normalizeIdForCompare(normalizedPartner?.id || '');
+      const needsPartner = normalizedPartner && existingPartnerId !== desiredPartnerId;
+      const needsPeerId = normalizedPartner && peerSessionId && existing.peerSessionId !== peerSessionId;
+
+      if (needsPartner || needsPeerId) {
+        mutated = await dataStore.updateSession(existing.sessionKey, (record) => {
+          ensureWriting(record);
+          ensureSteps(record);
+          if (normalizedPartner) {
+            record.partner = {
+              sessionKey: '',
+              id: normalizedPartner.id,
+              name: normalizedPartner.name
+            };
+            record.presence = record.presence || {};
+            record.presence.partner = {
+              sessionKey: '',
+              id: normalizedPartner.id,
+              name: normalizedPartner.name,
+              stage: Number(record.presence?.partner?.stage || 1),
+              online:
+                normalizeIdForCompare(record.presence?.partner?.id || '') === desiredPartnerId
+                  ? Boolean(record.presence?.partner?.online)
+                  : false,
+              lastSeen: Number(record.presence?.partner?.lastSeen || 0)
+            };
+          }
+          if (peerSessionId) {
+            record.peerSessionId = peerSessionId;
+          }
+          return record;
+        });
+      }
+      return mutated;
+    }
+
+    const base = buildSeedSessionRecord({ id: studentId, name: student.name }, normalizedPartner, peerSessionId);
+    const saved = await dataStore.saveSession(base.sessionKey, base);
+    return saved;
+  }
+
+  async function seedSessionForPair(primary, partner) {
+    if (!primary?.id || !partner?.id) return null;
+    const primaryExisting = await findExistingSessionByStudentId(primary.id);
+    const partnerExisting = await findExistingSessionByStudentId(partner.id);
+    const sharedPeerId = primaryExisting?.peerSessionId || partnerExisting?.peerSessionId || uuid();
+
+    const primarySession = await ensureSeedSession(primary, partner, sharedPeerId, primaryExisting);
+    const partnerSession = await ensureSeedSession(partner, primary, sharedPeerId, partnerExisting);
+
+    if (primarySession) await ensureRosterPairing(primarySession);
+    if (partnerSession) await ensureRosterPairing(partnerSession);
+
+    return {
+      primarySessionKey: primarySession?.sessionKey || primaryExisting?.sessionKey || null,
+      partnerSessionKey: partnerSession?.sessionKey || partnerExisting?.sessionKey || null,
+      peerSessionId: sharedPeerId
+    };
+  }
+
+  async function seedRosterSessions({ forceReload = false } = {}) {
+    await fetchRosterStudents(forceReload);
+    const results = [];
+
+    for (const pair of rosterPairingsCache) {
+      const primary = pair?.primary || null;
+      const partner = pair?.partner || null;
+      if (!primary?.id || !partner?.id) continue;
+      const outcome = await seedSessionForPair(primary, partner);
+      if (outcome) {
+        results.push(outcome);
+      }
+    }
+
+    return {
+      processed: results.length,
+      peerSessionIds: results.map((item) => item.peerSessionId).filter(Boolean)
+    };
+  }
+
   async function updatePartnerMirrorPresence(session) {
     if (!session?.partner) return;
     const partnerInfo = session.partner;
@@ -941,6 +1102,7 @@ export function createSessionService(dataStore) {
     getPublicSettings,
     getServerDiag,
     deleteSession,
+    seedRosterSessions,
     reloadRosterCache: () => {
       rosterCache = null;
       rosterPairingsCache = [];
