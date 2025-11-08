@@ -90,9 +90,16 @@
     var values = rng.getValues();
     var list = [];
     var since = Number(sinceTs || 0);
+    var isPeerChannel = String(channel) === 'peer-chat' || String(channel) === 'peer';
+    
     for (var i=0; i<values.length; i++) {
       var r = values[i];
-      if (String(r[1]) !== String(sessionId)) continue; // sessionId 컬럼
+      // 동료 채팅의 경우 roomId(peerSessionId)로 검색, 다른 채널은 sessionId로 검색
+      if (isPeerChannel) {
+        if (String(r[2]) !== String(sessionId)) continue; // roomId 컬럼
+      } else {
+        if (String(r[1]) !== String(sessionId)) continue; // sessionId 컬럼
+      }
       var ts = Number(r[0]);
       if (ts <= since) continue;
       var meta = {};

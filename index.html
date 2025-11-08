@@ -1780,7 +1780,7 @@
           }).withFailureHandler(function(err){
             if (appended && appended.element) appended.element.classList.add('error');
             handleError(err);
-          }).postMessage(state.peerChat.sessionId, state.group, state.user.id, state.user.name, 'user', text, { channel: 'peer-chat', sessionKey: state.sessionKey });
+          }).postMessage(state.peerChat.sessionId, state.group, state.user.id, state.user.name, 'user', text, { channel: 'peer-chat', sessionKey: state.sessionKey, roomId: state.peerChat.sessionId });
         }
 
         function buildChatDedupeKey(message, ts){

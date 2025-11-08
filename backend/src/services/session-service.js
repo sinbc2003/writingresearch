@@ -156,6 +156,7 @@ export function createSessionService(dataStore) {
     }
     const now = Date.now();
     if (!forceReload && rosterCache && now - rosterFetchedAt < ROSTER_CACHE_TTL) {
+      console.log('[fetchRosterStudents] 캐시 사용, 학생 수:', rosterCache.length, '매칭 수:', rosterPairingsCache.length);
       return rosterCache;
     }
     const roster = await dataStore.getRoster();
@@ -166,6 +167,8 @@ export function createSessionService(dataStore) {
     }));
     rosterPairingsCache = normalizeRosterPairingsForCache(roster?.pairings || [], rosterCache);
     rosterFetchedAt = now;
+    console.log('[fetchRosterStudents] 로스터 새로 로드, 학생 수:', rosterCache.length, '매칭 수:', rosterPairingsCache.length);
+    console.log('[fetchRosterStudents] 매칭 목록:', rosterPairingsCache.map(p => `${p.primary.id}-${p.partner.id}`));
     return rosterCache;
   }
 
@@ -324,6 +327,14 @@ export function createSessionService(dataStore) {
     };
     if (sessionPeerId && sessionPeerId !== sharedId) addSource(sessionPeerId, messagesA);
     if (partnerPeerId && partnerPeerId !== sharedId) addSource(partnerPeerId, messagesB);
+    
+    console.log('[determineSharedPeerSessionId] 결과:', {
+      sessionPeerId,
+      partnerPeerId,
+      sharedId,
+      mergeSources: mergeSources.map(s => ({ id: s.id, count: s.messages.length }))
+    });
+    
     return { sharedId, mergeSources };
   }
 
@@ -353,27 +364,40 @@ export function createSessionService(dataStore) {
   async function findExistingSessionByStudentId(studentId) {
     const target = normalizeIdForCompare(studentId);
     if (!target) return null;
+    console.log('[findExistingSessionByStudentId] 검색 대상:', studentId, '-> ', target);
+    
     const keys = await dataStore.listSessions();
-    if (!keys.length) return null;
+    console.log('[findExistingSessionByStudentId] 전체 세션 키 수:', keys?.length || 0);
+    
+    if (!keys?.length) return null;
+    
     let candidate = null;
     for (const key of keys) {
       try {
         const session = await dataStore.getSession(key);
         if (!session?.you?.id) continue;
-        if (normalizeIdForCompare(session.you.id) !== target) continue;
+        
+        const sessionUserId = normalizeIdForCompare(session.you.id);
+        console.log('[findExistingSessionByStudentId] 세션 검사:', key, session.you.id, '-> ', sessionUserId);
+        
+        if (sessionUserId !== target) continue;
+        
         if (!candidate) {
           candidate = session;
+          console.log('[findExistingSessionByStudentId] 첫 번째 매칭 세션:', key);
           continue;
         }
         const candidateUpdated = Number(candidate.updatedAt || candidate.createdAt || 0);
         const sessionUpdated = Number(session.updatedAt || session.createdAt || 0);
         if (sessionUpdated > candidateUpdated) {
           candidate = session;
+          console.log('[findExistingSessionByStudentId] 더 최신 세션으로 교체:', key);
         }
       } catch (error) {
         console.warn('기존 세션 조회 실패', error);
       }
     }
+    console.log('[findExistingSessionByStudentId] 최종 결과:', candidate ? candidate.sessionKey : 'null');
     return candidate;
   }
 
@@ -429,6 +453,9 @@ export function createSessionService(dataStore) {
   async function startSession({ group, studentId, studentName }) {
     const normalizedGroup = normalizeGroup(group);
     const verifiedStudent = await ensureStudentAllowed(studentId, studentName);
+    
+    // 로그인 시 로스터 강제 갱신
+    await fetchRosterStudents(true);
     const existingSession = await findExistingSessionByStudentId(verifiedStudent.id);
     if (existingSession) {
       const updated = await dataStore.updateSession(existingSession.sessionKey, (session) => {
@@ -495,8 +522,18 @@ export function createSessionService(dataStore) {
     if (!session || !session.sessionKey || !session.you?.id) {
       return session;
     }
+    console.log('[ensureRosterPairing] 세션 확인:', {
+      sessionKey: session.sessionKey,
+      userId: session.you?.id,
+      currentPartner: session.partner?.id,
+      currentPeerSessionId: session.peerSessionId
+    });
+    
     const pair = findRosterPairingForStudent(session.you.id);
-    if (!pair) return session;
+    if (!pair) {
+      console.log('[ensureRosterPairing] 로스터에서 매칭 찾지 못함:', session.you.id);
+      return session;
+    }
     const partnerEntry = resolvePartnerEntry(pair, session.you.id) || {};
     const desiredPartnerId = normalizeId(partnerEntry.id);
     if (!desiredPartnerId) return session;
@@ -508,7 +545,15 @@ export function createSessionService(dataStore) {
       return session;
     }
 
+    console.log('[ensureRosterPairing] 매칭 찾음:', {
+      partnerEntry: partnerEntry,
+      desiredPartnerId: desiredPartnerId,
+      selfKey: selfKey
+    });
+    
     const partnerSession = await findExistingSessionByStudentId(desiredPartnerId);
+    console.log('[ensureRosterPairing] 동료 세션 검색 결과:', partnerSession ? partnerSession.sessionKey : 'null');
+    
     if (!partnerSession) {
       if (!currentPartnerKey) {
         return dataStore.updateSession(session.sessionKey, (record) => {
@@ -541,6 +586,8 @@ export function createSessionService(dataStore) {
     }
 
     const { sharedId, mergeSources } = await determineSharedPeerSessionId(session, partnerSession);
+    console.log('[ensureRosterPairing] 공유 peerSessionId:', sharedId);
+    
     const partnerSnapshot = buildPartnerSnapshot(partnerSession, partnerEntry);
     const partnerPresence = buildPartnerPresence(partnerSession, partnerEntry);
     const selfSnapshot = buildPartnerSnapshot(session, { id: session.you.id, name: session.you.name });
@@ -753,6 +800,12 @@ export function createSessionService(dataStore) {
         return record;
       }),
       dataStore.updateSession(partnerSession.sessionKey, (record) => {
+        console.log('[ensureRosterPairing] 동료 세션 업데이트:', {
+          sessionKey: partnerSession.sessionKey,
+          oldPeerSessionId: record.peerSessionId,
+          newPeerSessionId: sharedId
+        });
+        
         ensureWriting(record);
         ensureSteps(record);
         record.partner = selfSnapshot;
