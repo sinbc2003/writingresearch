@@ -43,8 +43,9 @@ const config = {
     }
   },
   dictionary: {
-    provider: process.env.DICTIONARY_PROVIDER || 'dictionaryapi',
-    libreTranslateUrl: process.env.LIBRE_TRANSLATE_URL || 'https://libretranslate.de/translate'
+    provider: process.env.DICTIONARY_PROVIDER || 'openai',
+    openaiModel: process.env.DICTIONARY_OPENAI_MODEL || 'gpt-4.1-mini',
+    systemPrompt: process.env.DICTIONARY_SYSTEM_PROMPT || ''
   },
   admin: {
     password: process.env.ADMIN_PASSWORD || '159753tt!',
