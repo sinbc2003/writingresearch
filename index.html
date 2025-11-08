@@ -56,6 +56,12 @@
       .step-item.completed { border-color: #bbf7d0; }
       .step-item.completed .step-number { background: #10b981; color: #ffffff; }
       .workspace-grid { display: grid; gap: 16px; grid-template-columns: 1.1fr 0.9fr; flex: 1; min-height: 0; }
+      .workspace-body { display: flex; gap: 20px; align-items: stretch; }
+      .workspace-main { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+      .dictionary-sidebar { width: 320px; flex-shrink: 0; position: sticky; top: 96px; align-self: flex-start; max-height: calc(100vh - 140px); overflow-y: auto; padding-right: 4px; }
+      .dictionary-sidebar .stage-panel { margin: 0; }
+      .dictionary-sidebar::-webkit-scrollbar { width: 6px; }
+      .dictionary-sidebar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); border-radius: 999px; }
       .left-column, .right-column { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
       .left-column { overflow-y: auto; padding-right: 6px; }
       .right-column { overflow: hidden; }
@@ -115,6 +121,10 @@
       .presence-offline { background: #94a3b8; }
       .notes-helper { font-size: 12px; color: #94a3b8; }
       .final-grid { display: grid; gap: 12px; }
+      @media (max-width: 1280px) {
+        .workspace-body { flex-direction: column; }
+        .dictionary-sidebar { position: static; width: 100%; max-height: none; overflow: visible; padding-right: 0; }
+      }
       @media (max-width: 1024px) {
         .workspace-grid { grid-template-columns: 1fr; }
         .right-column { order: -1; }
@@ -214,7 +224,9 @@
         </div>
       </div>
 
-        <div class="workspace-grid">
+        <div class="workspace-body">
+          <div class="workspace-main">
+            <div class="workspace-grid">
           <div class="left-column">
             <section id="panelPrompt" class="stage-panel" data-step="1">
               <div class="panel-header">
@@ -300,25 +312,6 @@
                 </div>
               </section>
 
-              <section id="panelDictionary" class="stage-panel">
-                <div class="panel-header">
-                  <h2>사전 도구 · 영한·한영 사전</h2>
-                  <span class="panel-subtext">필요한 어휘를 검색하세요.</span>
-                </div>
-                <div class="dictionary-search">
-                  <input id="dictQuery" type="text" placeholder="영어 또는 한국어 단어를 입력하세요." />
-                  <button id="btnDictSearch" class="secondary" type="button">검색</button>
-                </div>
-                <div id="dictResult" class="dictionary-result">
-                  <div class="dict-word">사전 검색 결과</div>
-                  <div class="dict-pron">검색어를 입력하면 결과가 표시됩니다.</div>
-                </div>
-                <div>
-                  <strong>최근 검색</strong>
-                  <div id="dictEmpty" class="panel-subtext">최근 검색 이력이 없습니다.</div>
-                  <div id="dictHistory" class="dictionary-history"></div>
-                </div>
-              </section>
             </section>
 
             <section id="rightStage2" class="right-panel">
@@ -374,6 +367,28 @@
             </section>
           </div>
         </div>
+          </div>
+        <aside id="dictionarySidebar" class="dictionary-sidebar">
+          <section id="panelDictionary" class="stage-panel">
+            <div class="panel-header">
+              <h2>사전 도구 · 영한·한영 사전</h2>
+              <span class="panel-subtext">필요한 어휘를 검색하세요.</span>
+            </div>
+            <div class="dictionary-search">
+              <input id="dictQuery" type="text" placeholder="영어 또는 한국어 단어를 입력하세요." />
+              <button id="btnDictSearch" class="secondary" type="button">검색</button>
+            </div>
+            <div id="dictResult" class="dictionary-result">
+              <div class="dict-word">사전 검색 결과</div>
+              <div class="dict-pron">검색어를 입력하면 결과가 표시됩니다.</div>
+            </div>
+            <div>
+              <strong>최근 검색</strong>
+              <div id="dictEmpty" class="panel-subtext">최근 검색 이력이 없습니다.</div>
+              <div id="dictHistory" class="dictionary-history"></div>
+            </div>
+          </section>
+        </aside>
       </div>
     </div>
 
