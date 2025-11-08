@@ -38,7 +38,7 @@
       .link-button { background: none; border: none; color: #2563eb; font-weight: 600; padding: 8px 12px; border-radius: 8px; }
       .link-button:hover { background: rgba(37, 99, 235, 0.1); }
       .login-actions { display: flex; gap: 12px; justify-content: flex-end; }
-      .workspace { display: none; flex-direction: column; gap: 12px; flex: 1; overflow: hidden; }
+      .workspace { display: none; flex-direction: column; gap: 12px; flex: 1; overflow: hidden; min-height: 0; }
       .workspace-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 0; }
       .user-info { font-size: 14px; font-weight: 600; color: #475569; }
       .status-bar { padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5f5; background: #eef2ff; color: #1e3a8a; font-size: 13px; line-height: 1.4; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
@@ -55,10 +55,8 @@
       .step-item.active .step-number { background: #2563eb; color: #ffffff; }
       .step-item.completed { border-color: #bbf7d0; }
       .step-item.completed .step-number { background: #10b981; color: #ffffff; }
-      .workspace-grid { display: grid; gap: 16px; grid-template-columns: 1.1fr 0.9fr; flex: 1; min-height: 0; }
-      .left-column, .right-column { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-      .left-column { overflow-y: auto; padding-right: 6px; }
-      .right-column { overflow-y: auto; padding-right: 6px; }
+      .workspace-grid { display: grid; gap: 16px; grid-template-columns: 1.1fr 0.9fr; flex: 1; min-height: 0; height: 100%; }
+      .left-column, .right-column { display: flex; flex-direction: column; gap: 14px; min-height: 0; height: 100%; overflow-y: auto; padding-right: 6px; }
       .stage-panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
       .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
       .panel-header h2 { font-size: 18px; font-weight: 700; margin: 0; color: #111827; }
@@ -67,7 +65,7 @@
       .text-block { padding: 12px; border-radius: 10px; border: 1px solid #d8dee9; background: #f8fafc; font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: #1f2937; }
       .button-row { display: flex; gap: 10px; justify-content: flex-end; }
       .meta-info { font-size: 12px; color: #64748b; }
-      .right-panel { display: none; flex-direction: column; gap: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; min-height: 360px; flex: 1; min-height: 0; overflow: hidden; }
+      .right-panel { display: none; flex-direction: column; gap: 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; min-height: 360px; flex: none; overflow: visible; }
       .dictionary-search { display: flex; gap: 10px; }
       .dictionary-result { padding: 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; display: flex; flex-direction: column; gap: 8px; }
       .dict-word { font-size: 18px; font-weight: 700; color: #111827; }
