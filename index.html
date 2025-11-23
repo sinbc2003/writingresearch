@@ -59,7 +59,7 @@
       .left-column, .right-column { display: flex; flex-direction: column; gap: 14px; min-height: 0; height: 100%; overflow-y: auto; padding-right: 6px; }
       .stage-panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
       .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-      .panel-header h2 { font-size: 18px; font-weight: 700; margin: 0; color: #111827; }
+      .panel-header h2 { font-size: 18px; font-weight: 700; margin: 0; color: #111827; white-space: nowrap; }
       .panel-subtext { font-size: 13px; color: #64748b; }
       .readonly-block { display: none; padding: 12px; border-radius: 10px; border: 1px dashed #cbd5e1; background: #f8fafc; font-size: 14px; line-height: 1.7; color: #1f2937; white-space: pre-wrap; }
       .text-block { padding: 12px; border-radius: 10px; border: 1px solid #d8dee9; background: #f8fafc; font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: #1f2937; }
@@ -217,8 +217,7 @@
             <section id="panelPrompt" class="stage-panel" data-step="1">
               <div class="panel-header">
                 <h2>1단계 · 제시문 안내</h2>
-                <span class="panel-subtext">제시문을 확인한 뒤, 주어진 시간 20분 동안 사전 글쓰기를 진행하세요.
-                </span>
+                <span class="panel-subtext">제시문을 확인한 뒤, 주어진 시간 25분 동안 사전 글쓰기를 진행하세요.</span>
               </div>
               <div id="promptContent" class="text-block">제시문이 아직 등록되지 않았습니다.</div>
             </section>
@@ -242,7 +241,7 @@
 
             <section id="panelMemoStage3" class="stage-panel" data-step="3">
               <div class="panel-header">
-                <h2 id="memoStage3Title">3단계 · 글쓰기 수정 관련 추가 메모</h2>
+                <h2 id="memoStage3Title">글쓰기 수정 관련 메모</h2>
                 <span id="memoStage3Info" class="panel-subtext">동료의 글을 읽고, 10분 동안 어떤 피드백을 줄지 생각해 보세요. 피드백 내용을 메모 형태로 자유롭게 정리하세요. 동료에게서 받은 피드백을 참고하여, 글을 어떻게 수정할지에 대한 아이디어를 메모 형태로 자유롭게 정리하세요.</span>
               </div>
               <div class="prewriting-preview-block">
@@ -337,7 +336,7 @@
 
             <section id="rightStage3" class="right-panel">
               <div class="panel-header">
-                <h2>동료와의 대화</h2>
+                <h2>동료 피드백</h2>
                 <span class="panel-subtext">동료와 15분간 상호작용하며 자신의 글에 대한 피드백을 받아 보세요. 동료에게 글을 대신 써달라고 요청하는 것은 안 됩니다.</span>
               </div>
                <div class="partner-box">
@@ -1144,7 +1143,7 @@
           if (!notesInput || !saveBtn || !nextBtn) return;
 
           if (titleEl) {
-            titleEl.textContent = '3단계 · 글쓰기 수정 관련 추가 메모';
+            titleEl.textContent = '글쓰기 수정 관련 메모';
           }
 
           if (infoEl) {
@@ -1409,6 +1408,11 @@
 
         function onSaveDraft(){
           if (!hasGas) return;
+          if (state.lastDraftSaveTime && Date.now() - state.lastDraftSaveTime < 2000) {
+             setStatus('잠시 후 다시 저장해주세요.', 'warn');
+             return;
+          }
+          state.lastDraftSaveTime = Date.now();
           const text = $('draftInput').value.trim();
           if (!text) { setStatus('2단계 메모를 입력하세요.', 'warn'); return; }
           $('btnSaveDraft').disabled = true;
@@ -1525,6 +1529,11 @@
 
         function onSavePeerNotes(){
           if (!hasGas) return;
+          if (state.lastPeerNotesSaveTime && Date.now() - state.lastPeerNotesSaveTime < 2000) {
+             setStatus('잠시 후 다시 저장해주세요.', 'warn');
+             return;
+          }
+          state.lastPeerNotesSaveTime = Date.now();
           const stage = Number(state.stage || 1);
           const group = (state.group || '').toUpperCase();
           const isMemoStage = stage === 3 && (group === 'A' || group === 'B');
@@ -2051,7 +2060,10 @@
         }
 
         function handleError(err){
-          const msg = err && err.message ? err.message : (typeof err === 'string' ? err : '알 수 없는 오류가 발생했습니다.');
+          let msg = err && err.message ? err.message : (typeof err === 'string' ? err : '알 수 없는 오류가 발생했습니다.');
+          if (msg.includes('429') || msg.includes('rate limit') || msg.includes('quota')) {
+            msg = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
+          }
           console.error(err);
           setStatus(msg, 'error');
         }
@@ -2071,7 +2083,7 @@
           switch (Number(step)) {
             case 1: return '1단계 사전 글쓰기';
             case 2: return group === 'B' ? '2단계 동료 피드백' : '2단계 AI 피드백';
-            case 3: return '3단계 글쓰기 수정 관련 추가 메모';
+            case 3: return '3단계 글쓰기 수정 관련 메모';
             case 4: return '4단계 최종 수정 및 제출';
             default: return step + '단계';
           }
