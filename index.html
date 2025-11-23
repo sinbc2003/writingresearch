@@ -461,6 +461,9 @@
             advanceToFinalStage: function(sessionKey){
               return request('POST', `session/${encodeURIComponent(sessionKey)}/advance-final`);
             },
+            jumpToStage: function(sessionKey, stage){
+              return request('POST', `session/${encodeURIComponent(sessionKey)}/jump`, { body: { stage } });
+            },
             regressStage: function(sessionKey){
               return request('POST', `session/${encodeURIComponent(sessionKey)}/regress`);
             },
@@ -964,6 +967,12 @@
         function getHighestUnlockedStage(){
           let highest = Number(state.stage || 1) || 1;
           const steps = state.steps || {};
+          
+          // 1단계(사전 글쓰기)가 완료되면 이후 단계(2,3,4)를 모두 자유롭게 이동할 수 있도록 허용
+          if (steps.prewriting && steps.prewriting.completed) {
+            return 4;
+          }
+          
           const group = (state.group || '').toUpperCase();
           if (steps.prewriting && steps.prewriting.completed) {
             highest = Math.max(highest, 2);

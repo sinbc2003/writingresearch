@@ -186,6 +186,16 @@ app.post('/api/session/:sessionKey/regress', async (req, res, next) => {
   }
 });
 
+app.post('/api/session/:sessionKey/jump', async (req, res, next) => {
+  try {
+    const { stage } = req.body;
+    const updated = await sessionService.jumpToStage(req.params.sessionKey, stage);
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post('/api/session/:sessionKey/presence/touch', async (req, res, next) => {
   try {
     const updated = await sessionService.touchPresence(req.params.sessionKey);

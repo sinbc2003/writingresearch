@@ -1012,6 +1012,15 @@ export function createSessionService(dataStore) {
     });
   }
 
+  async function jumpToStage(sessionKey, targetStage) {
+    const target = Number(targetStage);
+    if (!target || target < 1 || target > 4) throw createError(400, '유효하지 않은 단계입니다.');
+    return dataStore.updateSession(sessionKey, (session) => {
+      session.stage = target;
+      return session;
+    });
+  }
+
   async function touchPresence(sessionKey) {
     const updated = await dataStore.updateSession(sessionKey, (session) => {
       const now = Date.now();
@@ -1080,6 +1089,7 @@ export function createSessionService(dataStore) {
     advanceToPeerStage,
     advanceToFinalStage,
     regressStage,
+    jumpToStage,
     touchPresence,
     postPresenceLeave,
     getAllSessionsWithDetails: async () => {
