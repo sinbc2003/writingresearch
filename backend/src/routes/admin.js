@@ -117,6 +117,10 @@ export function createAdminRouter({ adminService, sessionService, chatService })
     }
   });
 
+  // 내보내기 엔드포인트는 동적 세션 라우트보다 먼저 선언해야 URL 충돌을 피할 수 있다.
+  router.get('/sessions/export', (req, res, next) => handleSessionsExport(req, res, next));
+  router.get('/sessions/export/json', (req, res, next) => handleSessionsExport(req, res, next, 'json'));
+
   router.get('/sessions/:sessionKey', async (req, res, next) => {
     try {
       const session = await sessionService.getSessionState(req.params.sessionKey);
@@ -196,9 +200,6 @@ export function createAdminRouter({ adminService, sessionService, chatService })
       next(error);
     }
   });
-
-  router.get('/sessions/export', (req, res, next) => handleSessionsExport(req, res, next));
-  router.get('/sessions/export/json', (req, res, next) => handleSessionsExport(req, res, next, 'json'));
 
   router.get('/roster', async (req, res, next) => {
     try {
