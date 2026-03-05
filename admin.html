@@ -411,6 +411,42 @@
           <button id="btnLogout" class="danger" type="button">로그아웃</button>
         </div>
 
+        <section class="card" id="timerSection">
+          <h2>단계 타이머</h2>
+          <p class="muted" style="margin-bottom: 12px;">관리자가 시작하면 접속한 학생 전체에 동일 타이머가 적용됩니다.</p>
+          <div class="grid grid-2">
+            <div>
+              <label for="timerStage1">1단계 사전 글쓰기 (분)</label>
+              <input id="timerStage1" type="number" min="1" step="1" />
+            </div>
+            <div>
+              <label for="timerStage2">2단계 AI 피드백 (분)</label>
+              <input id="timerStage2" type="number" min="1" step="1" />
+            </div>
+            <div>
+              <label for="timerStage3Review">3단계 동료 글 보기 (분)</label>
+              <input id="timerStage3Review" type="number" min="1" step="1" />
+            </div>
+            <div>
+              <label for="timerStage3Revision">3단계 동료와 수정 (분)</label>
+              <input id="timerStage3Revision" type="number" min="1" step="1" />
+            </div>
+            <div>
+              <label for="timerStage4">4단계 최종 수정 (분)</label>
+              <input id="timerStage4" type="number" min="1" step="1" />
+            </div>
+          </div>
+          <div class="match-actions" style="margin-top: 16px; justify-content: flex-end;">
+            <span id="timerStatusText" class="muted" style="margin-right: auto;">타이머 상태를 불러오는 중...</span>
+            <button id="btnTimerReload" class="secondary" type="button">새로고침</button>
+            <button id="btnTimerSave" class="secondary" type="button">시간 저장</button>
+            <button id="btnTimerStart" class="primary" type="button">타이머 시작</button>
+            <button id="btnTimerStop" class="secondary" type="button">중지</button>
+            <button id="btnTimerReset" class="danger" type="button">리셋</button>
+            <button id="btnTimerRestart" class="primary" type="button">다시시작</button>
+          </div>
+        </section>
+
         <section class="card" id="exportSection">
           <h2>데이터 다운로드</h2>
           <p class="muted" style="margin-bottom: 12px;">내려받을 항목을 선택한 후 <strong>선택 항목 다운로드</strong> 버튼을 눌러주세요. 파일은 Excel(xlsx) 형식으로 저장됩니다.</p>
@@ -497,41 +533,6 @@
           </div>
           <div class="muted" style="margin-top: 20px;">미리보기</div>
           <div id="promptPreview" class="prompt-preview empty">제시문이 아직 등록되지 않았습니다.</div>
-        </section>
-
-        <section class="card" id="timerSection">
-          <h2>단계 타이머</h2>
-          <p class="muted" style="margin-bottom: 12px;">관리자가 시작하면 접속한 학생 전체에 동일 타이머가 적용됩니다.</p>
-          <div class="grid grid-2">
-            <div>
-              <label for="timerStage1">1단계 사전 글쓰기 (분)</label>
-              <input id="timerStage1" type="number" min="1" step="1" />
-            </div>
-            <div>
-              <label for="timerStage2">2단계 AI 피드백 (분)</label>
-              <input id="timerStage2" type="number" min="1" step="1" />
-            </div>
-            <div>
-              <label for="timerStage3Review">3단계 동료 글 보기 (분)</label>
-              <input id="timerStage3Review" type="number" min="1" step="1" />
-            </div>
-            <div>
-              <label for="timerStage3Revision">3단계 동료와 수정 (분)</label>
-              <input id="timerStage3Revision" type="number" min="1" step="1" />
-            </div>
-            <div>
-              <label for="timerStage4">4단계 최종 수정 (분)</label>
-              <input id="timerStage4" type="number" min="1" step="1" />
-            </div>
-          </div>
-          <div class="match-actions" style="margin-top: 16px; justify-content: flex-end;">
-            <span id="timerStatusText" class="muted" style="margin-right: auto;">타이머 상태를 불러오는 중...</span>
-            <button id="btnTimerReload" class="secondary" type="button">새로고침</button>
-            <button id="btnTimerSave" class="secondary" type="button">시간 저장</button>
-            <button id="btnTimerStart" class="primary" type="button">타이머 시작</button>
-            <button id="btnTimerStop" class="secondary" type="button">중지</button>
-            <button id="btnTimerReset" class="danger" type="button">리셋</button>
-          </div>
         </section>
 
         <section class="card" id="quickMatchSection">
@@ -1069,6 +1070,7 @@
         $('btnTimerStart').addEventListener('click', startTimer);
         $('btnTimerStop').addEventListener('click', stopTimer);
         $('btnTimerReset').addEventListener('click', resetTimer);
+        $('btnTimerRestart').addEventListener('click', restartTimer);
         $('btnDownloadExport').addEventListener('click', downloadExport);
         $('btnSelectSession').addEventListener('click', handleSessionSearchSubmit);
         $('sessionSearchInput').addEventListener('keydown', (event) => {
@@ -1361,7 +1363,7 @@
         function formatTimerStatus(timer){
           if (!timer || !timer.running || !timer.startedAt) return '타이머 대기';
           const phase = timer.currentPhase || null;
-          if (!phase) return '수업 시간 종료';
+          if (!phase) return '시간 종료';
           const remain = Math.max(0, Number(phase.remainingSeconds || 0));
           const mm = Math.floor(remain / 60);
           const ss = remain % 60;
@@ -1455,6 +1457,23 @@
             setStatus(error.message || '타이머 리셋에 실패했습니다.', 'error');
           } finally {
             $('btnTimerReset').disabled = false;
+          }
+        }
+
+        async function restartTimer(){
+          if (!confirm('타이머를 다시시작하시겠습니까? (리셋 후 즉시 시작)')) return;
+          $('btnTimerRestart').disabled = true;
+          try {
+            // 최신 설정값을 먼저 저장한 뒤 타이머를 리셋/재시작합니다.
+            await apiRequest('timer', { method: 'POST', body: buildTimerPayload() });
+            await apiRequest('timer/reset', { method: 'POST' });
+            const timer = await apiRequest('timer/start', { method: 'POST' });
+            renderTimer(timer);
+            setStatus('타이머를 다시시작했습니다.', 'success');
+          } catch (error) {
+            setStatus(error.message || '타이머 다시시작에 실패했습니다.', 'error');
+          } finally {
+            $('btnTimerRestart').disabled = false;
           }
         }
 
@@ -2034,7 +2053,7 @@
 
         function formatPromptHtml(text){
           const escaped = escapeHtml(String(text || ''));
-          const withBold = escaped.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
+          const withBold = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
           return withBold.replace(/\n/g, '<br/>');
         }
 
