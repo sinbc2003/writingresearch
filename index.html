@@ -2108,11 +2108,25 @@
           }
         }
 
+        function sanitizeDisplayText(text, fallback){
+          const raw = String(text == null ? '' : text).trim();
+          if (!raw) return String(fallback || '').trim();
+          const hasMojibake = /[\uF900-\uFAFF�]/.test(raw) || /\?{3,}/.test(raw);
+          if (!hasMojibake) return raw;
+          const cleaned = raw
+            .replace(/[\uF900-\uFAFF�]/g, ' ')
+            .replace(/\?{2,}/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          return cleaned || String(fallback || '').trim();
+        }
+
         function setStatus(message, type){
-          state.status = { message: message, type: type || 'info' };
+          const safeMessage = sanitizeDisplayText(message, '메시지를 표시할 수 없습니다.');
+          state.status = { message: safeMessage, type: type || 'info' };
           const bar = $('statusBar');
           if (!bar) return;
-          bar.textContent = message;
+          bar.textContent = safeMessage;
           bar.className = 'status-bar ' + (type || 'info');
         }
 
@@ -2177,7 +2191,8 @@
         }
 
         function formatPromptHtml(text){
-          const escaped = escapeHtml(String(text || ''));
+          const normalized = sanitizeDisplayText(text, '제시문이 아직 등록되지 않았습니다.');
+          const escaped = escapeHtml(normalized);
           const withBold = escaped.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
           return withBold.replace(/\n/g, '<br/>');
         }

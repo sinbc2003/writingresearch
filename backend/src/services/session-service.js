@@ -663,7 +663,7 @@ export function createSessionService(dataStore) {
     if (sessionPeerId && sessionPeerId !== sharedId) addSource(sessionPeerId, messagesA);
     if (partnerPeerId && partnerPeerId !== sharedId) addSource(partnerPeerId, messagesB);
     
-    console.log('[determineSharedPeerSessionId] 寃곌낵:', {
+    console.log('[determineSharedPeerSessionId] 결과:', {
       sessionPeerId,
       partnerPeerId,
       sharedId,
@@ -923,7 +923,7 @@ export function createSessionService(dataStore) {
     }
 
     const { sharedId, mergeSources } = await determineSharedPeerSessionId(session, partnerSession);
-    console.log('[ensureRosterPairing] 怨듭쑀 peerSessionId:', sharedId);
+    console.log('[ensureRosterPairing] 공유 peerSessionId:', sharedId);
     
     const partnerSnapshot = buildPartnerSnapshot(partnerSession, partnerEntry);
     const partnerPresence = buildPartnerPresence(partnerSession, partnerEntry);

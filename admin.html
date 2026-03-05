@@ -682,9 +682,22 @@
 
         const API_BASE = new URL('admin/', normalizeBaseUrl(APP.apiBaseUrl || '/api')).toString();
 
+        function sanitizeDisplayText(text, fallback){
+          const raw = String(text == null ? '' : text).trim();
+          if (!raw) return String(fallback || '').trim();
+          const hasMojibake = /[\uF900-\uFAFF�]/.test(raw) || /\?{3,}/.test(raw);
+          if (!hasMojibake) return raw;
+          const cleaned = raw
+            .replace(/[\uF900-\uFAFF�]/g, ' ')
+            .replace(/\?{2,}/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          return cleaned || String(fallback || '').trim();
+        }
+
         function setStatus(message, type){
           const bar = $('statusBar');
-          bar.textContent = message;
+          bar.textContent = sanitizeDisplayText(message, '메시지를 표시할 수 없습니다.');
           bar.className = `status-bar${type ? ' ' + type : ''}`;
         }
 
@@ -2052,8 +2065,9 @@
         }
 
         function formatPromptHtml(text){
-          const escaped = escapeHtml(String(text || ''));
-          const withBold = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+          const normalized = sanitizeDisplayText(text, '제시문이 아직 등록되지 않았습니다.');
+          const escaped = escapeHtml(normalized);
+          const withBold = escaped.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
           return withBold.replace(/\n/g, '<br/>');
         }
 
