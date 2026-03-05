@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>?곸뼱 湲?곌린 ?뚰겕?ㅽ럹?댁뒪</title>
+    <title>영어 글쓰기 워크스페이스</title>
     <style>
       *, *::before, *::after { box-sizing: border-box; }
       html, body { height: 100%; }
@@ -119,7 +119,7 @@
       .chat-line.system .chat-bubble { background: #f1f5f9; color: #475569; border: 1px dashed #cbd5e1; }
       .chat-meta { font-size: 11px; color: #94a3b8; }
       .chat-line.me .chat-meta { align-self: flex-end; }
-      .chat-line.pending .chat-meta::after { content: ' 쨌 ?꾩넚 以?; color: #f97316; }
+      .chat-line.pending .chat-meta::after { content: ' · 전송 중'; color: #f97316; }
       .chat-line.error .chat-bubble { border: 1px solid #f87171; }
       .chat-input { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
       .chat-input textarea { height: 96px; min-height: 96px; max-height: 96px; resize: none; overflow-y: auto; }
@@ -170,231 +170,110 @@
   <body>
     <div class="page-container">
       <div id="groupCard" class="card hero-card">
-        <h1>?곸뼱 湲?곌린 4?④퀎 ?뚮옯?쇳뤌</h1>
-        <p>吏묐떒???좏깮?섍퀬 ?앸퀎 踰덊샇? ?대쫫?쇰줈 濡쒓렇?명븯?몄슂.</p>
+        <h1>영어 글쓰기 4단계 플랫폼</h1>
+        <p>집단을 선택하고 학번 번호와 이름으로 로그인하세요.</p>
         <div class="group-buttons">
-          <button class="group-button" data-group-select="A">A 吏묐떒</button>
-          <button class="group-button" data-group-select="B">B 吏묐떒</button>
-          <button class="group-button" data-group-select="C">C 吏묐떒</button>
+          <button class="group-button" data-group-select="A">A 집단</button>
+          <button class="group-button" data-group-select="B">B 집단</button>
+          <button class="group-button" data-group-select="C">C 집단</button>
         </div>
-          </div>
-
+      </div>
       <div id="loginCard" class="card login-card">
         <div class="login-header">
-          <div id="selectedGroupLabel" class="login-group">吏묐떒 誘몄꽑??/div>
-          <div id="loginMessage" class="login-message">?앸퀎踰덊샇? ?대쫫???뺥솗?섍쾶 ?낅젰?댁＜?몄슂.</div>
-          </div>
+          <div id="selectedGroupLabel" class="login-group">집단 미선택</div>
+          <div id="loginMessage" class="login-message">학번번호와 이름을 정확하게 입력해주세요.</div>
+        </div>
         <form id="loginForm">
           <div class="field">
-            <label for="studentIdInput">?앸퀎 踰덊샇</label>
-            <input id="studentIdInput" type="text" placeholder="?? A10100" autocomplete="off" />
-        </div>
+            <label for="studentIdInput">학번 번호</label>
+            <input id="studentIdInput" type="text" placeholder="예) A10100" autocomplete="off" />
+          </div>
           <div class="field">
-            <label for="studentNameInput">?대쫫</label>
-            <input id="studentNameInput" type="text" placeholder="?대쫫???낅젰?섏꽭?? autocomplete="off" />
-        </div>
+            <label for="studentNameInput">이름</label>
+            <input id="studentNameInput" type="text" placeholder="이름을 입력하세요." autocomplete="off" />
+          </div>
           <div class="login-actions">
-            <button id="loginSubmit" class="primary" type="submit">?ㅽ뿕 ?쒖옉</button>
-            <button id="btnChangeGroup" class="ghost" type="button">?ㅻⅨ 吏묐떒 ?좏깮</button>
-      </div>
+            <button id="loginSubmit" class="primary" type="submit">세션 시작</button>
+            <button id="btnChangeGroup" class="ghost" type="button">다른 집단 선택</button>
+          </div>
         </form>
-    </div>
-
+      </div>
       <div id="workspace" class="workspace">
         <div class="workspace-toolbar">
           <div id="userInfo" class="user-info"></div>
           <div class="toolbar-right">
-            <div id="sessionTimer" class="session-timer stopped">??대㉧ ?湲?/div>
-            <button id="btnRestart" class="link-button" type="button">泥섏쓬?쇰줈 ?뚯븘媛湲?/button>
+            <div id="sessionTimer" class="session-timer stopped">타이머 대기</div>
+            <button id="btnRestart" class="link-button" type="button">처음으로 돌아가기</button>
           </div>
-          </div>
-        <div id="statusBar" class="status-bar info">吏묐떒???좏깮?섍퀬 濡쒓렇?명븯?몄슂.</div>
-        <div id="stepIndicator" class="step-indicator">
-          <div class="step-item" data-step="1">
-            <div class="step-number">1</div>
-            <div class="step-info">
-              <div class="step-title">?ъ쟾 湲?곌린</div>
-              <div class="step-caption"></div>
-          </div>
-          </div>
-          <div class="step-item" data-step="2">
-            <div class="step-number">2</div>
-            <div class="step-info">
-              <div class="step-title">AI ?쇰뱶諛?/div>
-              <div class="step-caption"></div>
-          </div>
-           </div>
-           <div class="step-item" data-step="3">
-             <div class="step-number">3</div>
-             <div class="step-info">
-              <div class="step-title">?숇즺 ?쇰뱶諛?/div>
-              <div class="step-caption"></div>
-             </div>
-           </div>
-          <div class="step-item" data-step="4">
-            <div class="step-number">4</div>
-            <div class="step-info">
-              <div class="step-title">理쒖쥌 ?섏젙 諛??쒖텧</div>
-              <div class="step-caption"></div>
-            </div>
         </div>
-      </div>
-
+        <div id="statusBar" class="status-bar info">집단을 선택하고 로그인하세요.</div>
+        <div id="stepIndicator" class="step-indicator">
+          <div class="step-item" data-step="1"><div class="step-number">1</div><div class="step-info"><div class="step-title">사전 글쓰기</div><div class="step-caption"></div></div></div>
+          <div class="step-item" data-step="2"><div class="step-number">2</div><div class="step-info"><div class="step-title">AI 피드백</div><div class="step-caption"></div></div></div>
+          <div class="step-item" data-step="3"><div class="step-number">3</div><div class="step-info"><div class="step-title">동료 피드백</div><div class="step-caption"></div></div></div>
+          <div class="step-item" data-step="4"><div class="step-number">4</div><div class="step-info"><div class="step-title">최종 수정 및 제출</div><div class="step-caption"></div></div></div>
+        </div>
         <div class="workspace-grid">
           <div class="left-column">
             <section id="panelPrompt" class="stage-panel" data-step="1">
-              <div class="panel-header">
-                <h2>1?④퀎 쨌 ?쒖떆臾??덈궡</h2>
-                <span class="panel-subtext">주어진 20분 동안 제시문을 읽고 하나의 입장을 선택하여, 자신의 의견을 지지하는 100단어 이상의 글을 작성하세요.</span>
-              </div>
-              <div id="promptContent" class="text-block">?쒖떆臾몄씠 ?꾩쭅 ?깅줉?섏? ?딆븯?듬땲??</div>
+              <div class="panel-header"><h2>1단계 · 제시문 안내</h2><span class="panel-subtext">주어진 20분 동안 제시문을 읽고 하나의 입장을 선택하여, 자신의 의견을 지지하는 100단어 이상의 글을 작성하세요.</span></div>
+              <div id="promptContent" class="text-block">제시문이 아직 등록되지 않았습니다.</div>
             </section>
-
             <section id="panelDraft" class="stage-panel" data-step="2">
-              <div class="panel-header">
-                <h2 id="draftTitle">2?④퀎 쨌 湲?곌린 ?섏젙 愿??硫붾え</h2>
-                <span id="draftInfo" class="panel-subtext">AI 튜터에게 받은 피드백을 바탕으로 사전 글쓰기를 자유롭게 수정하세요. 아래 창에는 추가 아이디어나 수정 사항을 자유롭게 메모하세요.</span>
-              </div>
-              <div class="prewriting-preview-block">
-                <strong>?섏쓽 ?ъ쟾 湲?곌린</strong>
-                <textarea id="prewritingPreviewInput" placeholder="2단계에서 사전 글쓰기를 수정하세요."></textarea>
-              </div>
-              <div class="button-row">
-                <button id="btnDraftBack" class="ghost" type="button">?댁쟾 ?④퀎濡??대룞</button>
-                <button id="btnSaveDraft" class="secondary" type="button" disabled>硫붾え ???/button>
-                <button id="btnToPeer" class="primary" type="button" disabled>?ㅼ쓬 ?④퀎濡??대룞</button>
-              </div>
+              <div class="panel-header"><h2 id="draftTitle">2단계 · 글쓰기 수정</h2><span id="draftInfo" class="panel-subtext">AI 튜터에게 받은 피드백을 바탕으로 사전 글쓰기를 자유롭게 수정하세요. 아래 창에는 추가 아이디어나 수정 사항을 자유롭게 메모하세요.</span></div>
+              <div class="prewriting-preview-block"><strong>나의 사전 글쓰기</strong><textarea id="prewritingPreviewInput" placeholder="2단계에서 사전 글쓰기를 수정하세요."></textarea></div>
+              <div class="button-row"><button id="btnDraftBack" class="ghost" type="button">이전 단계로 이동</button><button id="btnSaveDraft" class="secondary" type="button" disabled>수정 글 저장</button><button id="btnToPeer" class="primary" type="button" disabled>다음 단계로 이동</button></div>
             </section>
-
             <section id="panelMemoStage3" class="stage-panel" data-step="3">
-              <div class="panel-header">
-                <h2 id="memoStage3Title">湲?곌린 ?섏젙 愿??硫붾え</h2>
-                <span id="memoStage3Info" class="panel-subtext">동료의 글을 읽고, 10분 동안 제공할 피드백을 생각해보세요. 아래 창에는 관련 아이디어나 수정 사항을 자유롭게 메모하세요.</span>
-              </div>
-              <div class="prewriting-preview-block">
-                <strong>?숇즺 湲</strong>
-                <div id="peerStage3Partner" class="text-block">?숇즺 湲??遺덈윭?ㅻ뒗 以묒엯?덈떎.</div>
-              </div>
-              <div class="prewriting-preview-block">
-                <strong>2단계 수정 글</strong>
-                <textarea id="peerStage3Self" placeholder="3단계에서 2단계 수정 글을 계속 보완하세요." disabled></textarea>
-              </div>
+              <div class="panel-header"><h2 id="memoStage3Title">3단계 · 글쓰기 수정</h2><span id="memoStage3Info" class="panel-subtext">동료의 글을 읽고, 10분 동안 제공할 피드백을 생각해보세요. 아래 창에는 관련 아이디어나 수정 사항을 자유롭게 메모하세요.</span></div>
+              <div class="prewriting-preview-block"><strong>동료 글</strong><div id="peerStage3Partner" class="text-block">동료 글을 불러오는 중입니다.</div></div>
+              <div class="prewriting-preview-block"><strong>2단계 수정 글</strong><textarea id="peerStage3Self" placeholder="3단계에서 2단계 수정 글을 계속 보완하세요." disabled></textarea></div>
               <textarea id="notesInput" placeholder="추후 동료에게 받은 피드백을 바탕으로 2단계 글쓰기를 자유롭게 수정하세요." disabled></textarea>
-              <div class="button-row">
-                <button id="btnStage3Back" class="ghost" type="button">?댁쟾 ?④퀎濡??대룞</button>
-                <button id="btnNotesSave" class="secondary" type="button" disabled>3?④퀎 硫붾え ???/button>
-                <button id="btnPeerNext" class="primary" type="button" disabled>理쒖쥌 ?④퀎濡??대룞</button>
-              </div>
+              <div class="button-row"><button id="btnStage3Back" class="ghost" type="button">이전 단계로 이동</button><button id="btnNotesSave" class="secondary" type="button" disabled>3단계 수정 저장</button><button id="btnPeerNext" class="primary" type="button" disabled>최종 단계로 이동</button></div>
             </section>
-
             <section id="panelFinalSummary" class="stage-panel" data-step="4">
-              <div class="panel-header">
-                <h2>?댁쟾 ?④퀎 ?붿빟</h2>
-                <span class="panel-subtext">최종적으로 글을 수정하기에 앞서, 이전에 작성하셨던 메모를 확인하세요.</span>
-              </div>
+              <div class="panel-header"><h2>이전 단계 요약</h2><span class="panel-subtext">최종적으로 글을 수정하기에 앞서, 이전에 작성하셨던 메모를 확인하세요.</span></div>
               <div class="final-grid">
-                <div>
-                  <strong>3단계 수정 글</strong>
-                  <div id="finalPreText" class="text-block">?묒꽦???ъ쟾 湲???놁뒿?덈떎.</div>
-                </div>
-                <div>
-                  <strong>AI ?쇰뱶諛?湲?곌린 ?섏젙 愿??硫붾え</strong>
-                  <div id="finalStage2Memo" class="text-block">AI ?쇰뱶諛?湲?곌린 ?섏젙 愿??硫붾え媛 ?꾩쭅 ?놁뒿?덈떎.</div>
-                </div>
-                <div>
-                  <strong>?숇즺 ?쇰뱶諛?湲?곌린 ?섏젙 愿??硫붾え</strong>
-                  <div id="finalStage3Memo" class="text-block">?숇즺 ?쇰뱶諛?湲?곌린 ?섏젙 愿??硫붾え媛 ?꾩쭅 ?놁뒿?덈떎.</div>
-                </div>
+                <div><strong>3단계 수정 글</strong><div id="finalPreText" class="text-block">작성된 글이 없습니다.</div></div>
+                <div><strong>AI 피드백 기반 수정 메모</strong><div id="finalStage2Memo" class="text-block">AI 피드백 기반 수정 메모가 아직 없습니다.</div></div>
+                <div><strong>동료 피드백 기반 수정 메모</strong><div id="finalStage3Memo" class="text-block">동료 피드백 기반 수정 메모가 아직 없습니다.</div></div>
               </div>
             </section>
           </div>
-
           <div class="right-column">
             <section id="rightStage1" class="right-panel">
               <section id="panelPrewriting" class="stage-panel" data-step="1">
-                <div class="panel-header">
-                  <h2>1?④퀎 쨌 ?ъ쟾 湲?곌린</h2>
-                  <span id="prewritingInfo" class="panel-subtext"> 二쇱젣??????먯떊???낆옣???뺥븳 ?? ?곸뼱濡?湲???묒꽦?섏뿬 ?쒖텧?섏꽭??
-                  </span>
-                </div>
-                <textarea id="prewritingInput" placeholder="二쇱젣??????앷컖???먯쑀濡?쾶 ?묒꽦?섏꽭??"></textarea>
+                <div class="panel-header"><h2>1단계 · 사전 글쓰기</h2><span id="prewritingInfo" class="panel-subtext">주제에 대해 자신의 입장을 정하고, 영어로 글을 작성해 제출하세요.</span></div>
+                <textarea id="prewritingInput" placeholder="주제에 대한 생각을 자유롭게 작성하세요."></textarea>
                 <div id="prewritingReadonly" class="readonly-block"></div>
-                <div class="button-row">
-                  <button id="btnPreSubmit" class="primary" type="button" disabled>?ъ쟾 湲?곌린 ?쒖텧</button>
-                </div>
+                <div class="button-row"><button id="btnPreSubmit" class="primary" type="button" disabled>사전 글쓰기 제출</button></div>
               </section>
-
               <section id="panelDictionary" class="stage-panel">
-                <div class="panel-header">
-                  <h2>?ъ쟾 ?꾧뎄 쨌 ?곹븳쨌?쒖쁺 ?ъ쟾</h2>
-                  <span class="panel-subtext">?꾩슂???댄쐶瑜?寃?됲븯?몄슂.</span>
-                </div>
-                <div class="dictionary-search">
-                  <input id="dictQuery" type="text" placeholder="?곸뼱 ?먮뒗 ?쒓뎅???⑥뼱瑜??낅젰?섏꽭??" />
-                  <button id="btnDictSearch" class="secondary" type="button">寃??/button>
-                </div>
-                <div id="dictResult" class="dictionary-result">
-                  <div class="dict-word">?ъ쟾 寃??寃곌낵</div>
-                  <div class="dict-pron">寃?됱뼱瑜??낅젰?섎㈃ 寃곌낵媛 ?쒖떆?⑸땲??</div>
-                </div>
-                <div>
-                  <strong>理쒓렐 寃??/strong>
-                  <div id="dictEmpty" class="panel-subtext">理쒓렐 寃???대젰???놁뒿?덈떎.</div>
-                  <div id="dictHistory" class="dictionary-history"></div>
-                </div>
+                <div class="panel-header"><h2>사전 탐구 · 양방향 사전</h2><span class="panel-subtext">필요한 어휘를 검색하세요.</span></div>
+                <div class="dictionary-search"><input id="dictQuery" type="text" placeholder="영어 또는 한국어 단어를 입력하세요." /><button id="btnDictSearch" class="secondary" type="button">검색</button></div>
+                <div id="dictResult" class="dictionary-result"><div class="dict-word">사전 검색 결과</div><div class="dict-pron">검색어를 입력하면 결과가 표시됩니다.</div></div>
+                <div><strong>최근 검색</strong><div id="dictEmpty" class="panel-subtext">최근 검색 이력이 없습니다.</div><div id="dictHistory" class="dictionary-history"></div></div>
               </section>
-
             </section>
-
             <section id="rightStage2" class="right-panel">
-              <div class="panel-header">
-                <h2>AI ?쇰뱶諛?/h2>
-                <span class="panel-subtext">AI 튜터와 20분간 상호작용하며 자신의 글에 대한 피드백을 받으세요. 단, 글을 대신 작성해 달라고 요청할 수 없습니다.</span>
-              </div>
+              <div class="panel-header"><h2>AI 피드백</h2><span class="panel-subtext">AI 튜터와 20분간 상호작용하며 자신의 글에 대한 피드백을 받으세요. 단, 글을 대신 작성해 달라고 요청할 수 없습니다.</span></div>
               <div class="chat-log" id="aiChatLog"></div>
-              <div id="aiChatLoader" class="spinner"><span>AI ?묐떟 ?앹꽦 以?..</span></div>
-              <div class="chat-input">
-                <textarea id="aiInput" placeholder="AI?먭쾶 吏덈Ц?섍굅???쇰뱶諛깆쓣 ?붿껌?섏꽭??" disabled></textarea>
-                <div class="chat-actions">
-                  <button id="btnAiSend" class="primary" type="button" disabled>?꾩넚</button>
-          </div>
-        </div>
+              <div id="aiChatLoader" class="spinner"><span>AI 응답 생성 중...</span></div>
+              <div class="chat-input"><textarea id="aiInput" placeholder="AI에게 질문하거나 피드백을 요청하세요." disabled></textarea><div class="chat-actions"><button id="btnAiSend" class="primary" type="button" disabled>전송</button></div></div>
             </section>
-
             <section id="rightStage3" class="right-panel">
-              <div class="panel-header">
-                <h2>?숇즺 ?쇰뱶諛?/h2>
-                <span class="panel-subtext">동료와 15분간 상호작용하며 서로의 글에 대한 피드백을 진행하세요. 단, 글을 대신 작성해 달라고 요청할 수 없습니다.</span>
-              </div>
-               <div class="partner-box">
-                 <h3 id="partnerName">?숇즺 ?뺣낫瑜?遺덈윭?ㅻ뒗 以?..</h3>
-                 <div id="partnerInfoBox" class="partner-meta">?숇즺 ?묒뾽 ?④퀎?낅땲??</div>
-      </div>
-               <div class="presence-status">
-                 <span><span id="selfPresenceDot" class="presence-dot presence-offline"></span>?섏쓽 ?곹깭: <span id="peerPresenceSelf">?뺤씤 以?..</span></span>
-                 <span><span id="partnerPresenceDot" class="presence-dot presence-offline"></span>?숇즺 ?곹깭: <span id="peerPresencePartner">?뺤씤 以?..</span></span>
-          </div>
-               <div class="chat-log" id="peerChatLog"></div>
-               <div class="chat-input">
-                 <textarea id="peerInput" placeholder="?숇즺?먭쾶 硫붿떆吏瑜?蹂대궡蹂댁꽭??" disabled></textarea>
-                 <div class="chat-actions">
-                   <button id="btnPeerSend" class="primary" type="button" disabled>?꾩넚</button>
-                 </div>
-               </div>
-             </section>
-
+              <div class="panel-header"><h2>동료 피드백</h2><span class="panel-subtext">동료와 15분간 상호작용하며 서로의 글에 대한 피드백을 진행하세요. 단, 글을 대신 작성해 달라고 요청할 수 없습니다.</span></div>
+              <div class="partner-box"><h3 id="partnerName">동료 정보를 불러오는 중...</h3><div id="partnerInfoBox" class="partner-meta">동료 협업 단계입니다.</div></div>
+              <div class="presence-status"><span><span id="selfPresenceDot" class="presence-dot presence-offline"></span>나의 상태: <span id="peerPresenceSelf">확인 중...</span></span><span><span id="partnerPresenceDot" class="presence-dot presence-offline"></span>동료 상태: <span id="peerPresencePartner">확인 중...</span></span></div>
+              <div class="chat-log" id="peerChatLog"></div>
+              <div class="chat-input"><textarea id="peerInput" placeholder="동료에게 메시지를 보내보세요." disabled></textarea><div class="chat-actions"><button id="btnPeerSend" class="primary" type="button" disabled>전송</button></div></div>
+            </section>
             <section id="rightStage4" class="right-panel">
               <div class="panel-block">
-                <div class="panel-header">
-                  <h2>4?④퀎 쨌 理쒖쥌 湲?곌린</h2>
-                  <span id="finalInfo" class="panel-subtext">이전에 받은 피드백과 메모를 바탕으로 3단계 글쓰기를 자유롭게 수정하세요.</span>
-                </div>
-                <textarea id="finalInput" placeholder="3?④퀎?먯꽌 ?뺣━???댁슜??諛뷀깢?쇰줈 理쒖쥌 湲???묒꽦?섏꽭??" disabled></textarea>
+                <div class="panel-header"><h2>4단계 · 최종 글쓰기</h2><span id="finalInfo" class="panel-subtext">이전에 받은 피드백과 메모를 바탕으로 3단계 글쓰기를 자유롭게 수정하세요.</span></div>
+                <textarea id="finalInput" placeholder="3단계에서 정리한 내용을 바탕으로 최종 글을 작성하세요." disabled></textarea>
                 <div id="finalReadonly" class="readonly-block"></div>
-                <div class="button-row">
-                  <button id="btnFinalBack" class="ghost" type="button">?댁쟾 ?④퀎濡??대룞</button>
-                  <button id="btnFinalSubmit" class="primary" type="button" disabled>理쒖쥌 ?쒖텧</button>
-                </div>
+                <div class="button-row"><button id="btnFinalBack" class="ghost" type="button">이전 단계로 이동</button><button id="btnFinalSubmit" class="primary" type="button" disabled>최종 제출</button></div>
               </div>
             </section>
           </div>
@@ -582,7 +461,7 @@
           partner: null,
           presence: null,
           timer: null,
-          status: { message: '吏묐떒???좏깮?섍퀬 濡쒓렇?명븯?몄슂.', type: 'info' },
+          status: { message: '집단을 선택하고 로그인하세요.', type: 'info' },
           aiChat: { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false },
           peerChat: { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false },
           timers: { ai: null, peer: null, state: null, presence: null, clock: null },
@@ -613,7 +492,7 @@
           const changeBtn = $('btnChangeGroup');
           if (changeBtn) changeBtn.addEventListener('click', function(){ resetToGroupSelection(true); });
           const restartBtn = $('btnRestart');
-          if (restartBtn) restartBtn.addEventListener('click', function(){ if (!state.sessionKey || confirm('?꾩옱 ?몄뀡??醫낅즺?섍퀬 泥섏쓬 ?붾㈃?쇰줈 ?뚯븘媛?쒓쿋?듬땲源?')) resetToGroupSelection(true); });
+          if (restartBtn) restartBtn.addEventListener('click', function(){ if (!state.sessionKey || confirm('현재 세션을 종료하고 처음 화면으로 돌아가시겠습니까?')) resetToGroupSelection(true); });
 
           const prewritingInput = $('prewritingInput');
           if (prewritingInput) prewritingInput.addEventListener('input', function(){
@@ -706,7 +585,7 @@
         google.script.run.withSuccessHandler(function(info){
                 if (!info) return;
                 if (!info.teacherSheetId) {
-                  $('loginMessage').textContent = '?좑툘 愿由ъ옄: 援먯궗 ?쒗듃 ID媛 ?ㅼ젙?섏? ?딆븯?듬땲??';
+                  loginMessage.textContent = '관리자에게 문의하세요: 교사 시트 ID가 설정되지 않았습니다.';
                 }
         }).getServerDiag();
             } catch (e) { console.error(e); }
@@ -724,11 +603,11 @@
 
         function selectGroup(group){
           state.group = (group || '').toUpperCase();
-          $('selectedGroupLabel').textContent = state.group + ' 吏묐떒';
+          selectedGroupLabel.textContent = state.group + ' 집단';
           $('groupCard').style.display = 'none';
           $('loginCard').style.display = 'block';
           $('studentIdInput').focus();
-          setStatus('?앸퀎 踰덊샇? ?대쫫???낅젰?섎㈃ ?몄뀡???쒖옉?⑸땲??', 'info');
+          setStatus('학번 번호와 이름을 입력하면 세션이 시작됩니다.', 'info');
           renderUserInfo();
         }
 
@@ -749,7 +628,7 @@
           state.partner = null;
           state.presence = null;
           state.timer = null;
-          state.status = { message: '吏묐떒???좏깮?섍퀬 濡쒓렇?명븯?몄슂.', type: 'info' };
+          state.status = { message: '집단을 선택하고 로그인하세요.', type: 'info' };
           state.aiChat = { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false, awaitingResponse: false, welcomeShown: false };
           state.peerChat = { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false };
           state.dictionaryHistory = [];
@@ -775,36 +654,36 @@
             $('studentNameInput').value = '';
           }
           renderWorkspace();
-          setStatus('吏묐떒???좏깮?섍퀬 濡쒓렇?명븯?몄슂.', 'info');
+          setStatus('집단을 선택하고 로그인하세요.', 'info');
         }
 
         function onLoginSubmit(e){
           e.preventDefault();
           if (!hasGas) {
-            handleError('諛깆뿏???쒕퉬?ㅺ? ?곌껐?섏? ?딆븯?듬땲??');
+            handleError('백엔드 서비스가 연결되지 않았습니다.');
             return;
           }
           const sid = $('studentIdInput').value.trim();
           const name = $('studentNameInput').value.trim();
-          if (!state.group) { setStatus('癒쇱? 吏묐떒???좏깮?섏꽭??', 'warn'); return; }
-          if (!sid || !name) { setStatus('?앸퀎 踰덊샇? ?대쫫??紐⑤몢 ?낅젰?섏꽭??', 'warn'); return; }
+          if (!state.group) { setStatus('먼저 집단을 선택하세요.', 'warn'); return; }
+          if (!sid || !name) { setStatus('학번 번호와 이름을 모두 입력하세요.', 'warn'); return; }
           $('loginSubmit').disabled = true;
-          $('loginSubmit').textContent = '吏꾪뻾 以?..';
-          setStatus('?몄뀡??珥덇린?뷀븯??以묒엯?덈떎...', 'info');
+          loginSubmit.textContent = '진행 중...';
+          setStatus('세션을 초기화하는 중입니다...', 'info');
         google.script.run.withSuccessHandler(function(res){
             $('loginSubmit').disabled = false;
-            $('loginSubmit').textContent = '?ㅽ뿕 ?쒖옉';
+            loginSubmit.textContent = '세션 시작';
             onSessionStart(res);
-            setStatus('?몄뀡???쒖옉?섏뿀?듬땲?? 1?④퀎瑜?吏꾪뻾?섏꽭??', 'success');
+            setStatus('세션이 시작되었습니다. 1단계를 진행하세요.', 'success');
           }).withFailureHandler(function(err){
             $('loginSubmit').disabled = false;
-            $('loginSubmit').textContent = '?ㅽ뿕 ?쒖옉';
+            loginSubmit.textContent = '세션 시작';
             handleError(err);
           }).startSession(state.group, sid, name);
         }
 
         function onSessionStart(res){
-          if (!res) { handleError('?몄뀡 ?뺣낫瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??'); return; }
+          if (!res) { handleError('세션 정보를 불러오지 못했습니다.'); return; }
           state.group = (res.mode || state.group || '').toUpperCase();
           state.user = { id: (res.you && res.you.id) || '', name: (res.you && res.you.name) || '' };
           state.sessionKey = res.sessionKey || '';
@@ -969,9 +848,9 @@
           const el = $('userInfo');
           if (!el) return;
           if (state.sessionKey) {
-            el.textContent = state.group + '吏묐떒 쨌 ' + (state.user.id || '') + ' ' + (state.user.name || '');
+            el.textContent = state.group + '집단 · ' + (state.user.id || '') + ' ' + (state.user.name || '');
           } else if (state.group) {
-            el.textContent = state.group + '吏묐떒???좏깮?덉뒿?덈떎.';
+            el.textContent = state.group + '집단이 선택되었습니다.';
           } else {
             el.textContent = '';
           }
@@ -1054,13 +933,13 @@
           if (target <= current) return true;
           const timer = getLiveTimerState();
           if (!timer || !timer.running || !timer.startedAt) {
-            setStatus('愿由ъ옄媛 ??대㉧瑜??쒖옉???ㅼ뿉留??ㅼ쓬 ?④퀎濡??대룞?????덉뒿?덈떎.', 'warn');
+            setStatus('관리자가 타이머를 시작한 뒤에만 다음 단계로 이동할 수 있습니다.', 'warn');
             return false;
           }
           const required = getRequiredElapsedForStage(target);
           const elapsed = Number(timer.elapsedSeconds || 0);
           if (elapsed < required) {
-            setStatus('?꾩쭅 ?④퀎 ?대룞 ?쒓컙???꾨떃?덈떎. ?⑥? ?쒓컙: ' + formatRemainingSeconds(required - elapsed), 'warn');
+            setStatus('아직 단계 이동 시간이 되지 않았습니다. 남은 시간: ' + formatRemainingSeconds(required - elapsed), 'warn');
             return false;
           }
           return true;
@@ -1078,23 +957,23 @@
         }
 
         function renderSessionTimer(){
-          const el = $('sessionTimer');
+          const el = sessionTimer;
           if (!el) return;
           const timer = getLiveTimerState();
           if (!timer || !timer.running || !timer.startedAt) {
-            el.textContent = '??대㉧ ?湲?;
+            el.textContent = '타이머 대기';
             el.className = 'session-timer stopped';
             return;
           }
           const phase = timer.currentPhase || null;
           if (!phase) {
-            el.textContent = '?섏뾽 ?쒓컙 醫낅즺';
+            el.textContent = '수업 시간 종료';
             el.className = 'session-timer warn';
             return;
           }
           const remain = Number(phase.remainingSeconds || 0);
-          const label = String(phase.label || '吏꾪뻾 以?);
-          el.textContent = label + ' 쨌 ' + formatRemainingSeconds(remain);
+          const label = String(phase.label || '진행 중');
+          el.textContent = label + ' · ' + formatRemainingSeconds(remain);
           el.className = 'session-timer' + (remain <= 60 ? ' warn' : '');
         }
 
@@ -1102,10 +981,10 @@
           const current = Number(state.stage || 1);
           const group = (state.group || '').toUpperCase();
           const titleMap = {
-            1: '?ъ쟾 湲?곌린',
-            2: group === 'B' ? '?숇즺 ?쇰뱶諛? : 'AI ?쇰뱶諛?,
-            3: group === 'B' ? 'AI ?쇰뱶諛? : '?숇즺 ?쇰뱶諛?,
-            4: '理쒖쥌 ?섏젙 諛??쒖텧'
+            1: '사전 글쓰기',
+            2: group === 'B' ? '동료 피드백' : 'AI 피드백',
+            3: group === 'B' ? 'AI 피드백' : '동료 피드백',
+            4: '최종 수정 및 제출'
           };
           const captionMap = {
             1: '',
@@ -1191,7 +1070,7 @@
           }
           if (!ensureTimerGate(target)) return;
           if (!hasGas) return;
-          if (!state.sessionKey) { setStatus('?몄뀡???쒖꽦?붾릺吏 ?딆븯?듬땲??', 'error'); return; }
+          if (!state.sessionKey) { setStatus('?몄뀡???앹꽦?섏? ?딆븯?듬땲??', 'error'); return; }
           if (state.stageChangePending) return;
           state.stageChangePending = true;
           updateStepIndicator();
@@ -1277,16 +1156,16 @@
           }
           if (titleEl) {
             if (group === 'B') titleEl.textContent = '2?④퀎 쨌 ?숇즺 硫붾え';
-            else titleEl.textContent = '2?④퀎 쨌 湲?곌린 ?섏젙 愿??硫붾え';
+            else titleEl.textContent = '2?④퀎 쨌 湲?곌린 ?섏젙';
           }
           const savedAt = Number(state.writing.draft.savedAt || 0);
           if (savedAt) {
-            info.textContent = '留덉?留?硫붾え ??? ' + formatDate(savedAt);
+            info.textContent = '留덉?留???? ' + formatDate(savedAt);
         } else {
             if (group === 'B') {
-              info.textContent = '?숇즺?????붿뿉???살? ?ъ씤?몃? 湲곕줉?????대룞?섏꽭??';
+              info.textContent = '?숇즺???쇰뱶諛깆쓣 湲곕컲?쇰줈 ?섏젙 諛⑺뼢???뺣━?????대룞?섏꽭??';
             } else {
-              info.textContent = 'AI 튜터에게 받은 피드백을 바탕으로 사전 글쓰기를 자유롭게 수정하세요. 아래 창에는 추가 아이디어나 수정 사항을 자유롭게 메모하세요.';
+              info.textContent = 'AI ?쒗꽣?먭쾶 諛쏆? ?쇰뱶諛깆쓣 諛뷀깢?쇰줈 ?ъ쟾 湲?곌린瑜??먯쑀濡?쾶 ?섏젙?섏꽭?? ?꾨옒 李쎌뿉??異붽? ?꾩씠?붿뼱???섏젙 ?ы빆???먯쑀濡?쾶 硫붾え?섏꽭??';
             }
           }
           const backBtn = $('btnDraftBack');
@@ -1318,11 +1197,11 @@
           if (!notesInput || !saveBtn || !nextBtn) return;
 
           if (titleEl) {
-            titleEl.textContent = '3?④퀎 쨌 湲?곌린 ?섏젙 愿??硫붾え';
+            titleEl.textContent = '3?④퀎 쨌 湲?곌린 ?섏젙';
           }
 
           if (infoEl) {
-            infoEl.textContent = '동료의 글을 읽고, 10분 동안 제공할 피드백을 생각해보세요. 아래 창에는 관련 아이디어나 수정 사항을 자유롭게 메모하세요.';
+            infoEl.textContent = '?숇즺??湲???쎄퀬, 10遺??숈븞 ?쒓났???쇰뱶諛깆쓣 ?앷컖?대낫?몄슂. ?꾨옒 李쎌뿉??愿???꾩씠?붿뼱???섏젙 ?ы빆???먯쑀濡?쾶 硫붾え?섏꽭??';
             const memoSavedAt = Number(state.writing.notes.updatedAt || 0);
             if (memoSavedAt) infoEl.textContent += ' 쨌 留덉?留???? ' + formatDate(memoSavedAt);
           }
@@ -1407,7 +1286,7 @@
             submitBtn.textContent = hasSubmitted ? '理쒖쥌 ?쒖텧 ?꾨즺' : '理쒖쥌 ?쒖텧';
           }
           if (info) {
-            info.textContent = hasSubmitted ? '최종 제출 시간: ' + formatDate(finalSubmittedAt) : '이전에 받은 피드백과 메모를 바탕으로 3단계 글쓰기를 자유롭게 수정하세요.';
+            info.textContent = hasSubmitted ? '理쒖쥌 ?쒖텧 ?쒓컙: ' + formatDate(finalSubmittedAt) : '?댁쟾??諛쏆? ?쇰뱶諛깃낵 硫붾え瑜?諛뷀깢?쇰줈 3?④퀎 湲?곌린瑜??먯쑀濡?쾶 ?섏젙?섏꽭??';
           }
 
           const backBtn = $('btnFinalBack');
@@ -1423,9 +1302,9 @@
             }
           }
 
-          $('finalPreText').textContent = prewritingText || '?묒꽦???ъ쟾 湲???놁뒿?덈떎.';
-          $('finalStage2Memo').textContent = stage2Memo || 'AI ?쇰뱶諛?湲?곌린 ?섏젙 愿??硫붾え媛 ?꾩쭅 ?놁뒿?덈떎.';
-          $('finalStage3Memo').textContent = stage3Memo || '?숇즺 ?쇰뱶諛?湲?곌린 ?섏젙 愿??硫붾え媛 ?꾩쭅 ?놁뒿?덈떎.';
+          $('finalPreText').textContent = prewritingText || '?묒꽦??湲???놁뒿?덈떎.';
+          $('finalStage2Memo').textContent = stage2Memo || 'AI ?쇰뱶諛?湲곕컲 ?섏젙 硫붾え媛 ?꾩쭅 ?놁뒿?덈떎.';
+          $('finalStage3Memo').textContent = stage3Memo || '?숇즺 ?쇰뱶諛?湲곕컲 ?섏젙 硫붾え媛 ?꾩쭅 ?놁뒿?덈떎.';
         }
 
         function renderRightPanels(){
@@ -1460,7 +1339,7 @@
             if (stage === 2 && group === 'B') {
               infoEl.textContent = '?ъ쟾 湲??寃??以묒엯?덈떎. ?숇즺 ?④퀎: ' + peerStageName;
             } else if (stage === 3 && group === 'A') {
-              infoEl.textContent = '?ы썑 湲??寃??以묒엯?덈떎. ?숇즺 ?④퀎: ' + peerStageName;
+              infoEl.textContent = '?섏젙 湲??寃??以묒엯?덈떎. ?숇즺 ?④퀎: ' + peerStageName;
             } else {
               infoEl.textContent = '?꾩옱 ?④퀎: ' + peerStageName;
             }
@@ -1490,7 +1369,7 @@
           if (state.aiChat.welcomeShown) return;
           const logEl = $('aiChatLog');
           if (!logEl) return;
-          appendChatMessage('ai', { ts: 0, role: 'system', senderName: '?쒖뒪??, text: '湲?곌린? 愿?⑤맂 沅곴툑??寃껋쓣 吏덈Ц?섏꽭??' }, { pending: false });
+          appendChatMessage('ai', { ts: 0, role: 'system', senderName: '시스템', text: '글쓰기와 관련한 궁금한 점을 질문해 보세요.' }, { pending: false });
           state.aiChat.welcomeShown = true;
         }
 
@@ -1525,7 +1404,7 @@
             term.textContent = entry.word || '';
             const arrow = document.createElement('span');
             arrow.className = 'direction';
-            arrow.textContent = formatDictionaryDirection(entry.direction) || '??;
+            arrow.textContent = formatDictionaryDirection(entry.direction) || '↔';
             const summary = document.createElement('span');
             summary.className = 'translation';
             summary.textContent = entry.summary || '';
@@ -1559,7 +1438,7 @@
 
         function onSubmitPrewriting(){
           if (!hasGas) return;
-          if (!state.sessionKey) { setStatus('?몄뀡???쒖꽦?붾릺吏 ?딆븯?듬땲??', 'error'); return; }
+          if (!state.sessionKey) { setStatus('?몄뀡???앹꽦?섏? ?딆븯?듬땲??', 'error'); return; }
           const text = $('prewritingInput').value.trim();
           if (!text) { setStatus('?ъ쟾 湲?곌린 ?댁슜???낅젰?섏꽭??', 'warn'); return; }
           $('btnPreSubmit').disabled = true;
@@ -1576,17 +1455,17 @@
         function onSaveDraft(){
           if (!hasGas) return;
           if (state.lastDraftSaveTime && Date.now() - state.lastDraftSaveTime < 2000) {
-             setStatus('?좎떆 ???ㅼ떆 ??ν빐二쇱꽭??', 'warn');
+             setStatus('?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??', 'warn');
              return;
           }
           state.lastDraftSaveTime = Date.now();
           const text = $('prewritingPreviewInput').value.trim();
-          if (!text) { setStatus('2단계 수정 글을 입력하세요.', 'warn'); return; }
+          if (!text) { setStatus('2?④퀎 ?섏젙 湲???낅젰?섏꽭??', 'warn'); return; }
           $('btnSaveDraft').disabled = true;
-          setStatus('2단계 수정 글을 저장하는 중입니다...', 'info');
+          setStatus('2?④퀎 ?섏젙 湲????ν븯??以묒엯?덈떎...', 'info');
           google.script.run.withSuccessHandler(function(res){
             state.localDraftBuffer = text;
-            setStatus('2단계 수정 글이 저장되었습니다.', 'success');
+            setStatus('2?④퀎 ?섏젙 湲????λ릺?덉뒿?덈떎.', 'success');
             syncSessionState(res);
           }).withFailureHandler(function(err){
             $('btnSaveDraft').disabled = false;
@@ -1601,11 +1480,11 @@
           const targetStage = group === 'C' ? 4 : 3;
           if (!ensureTimerGate(targetStage)) return;
           if (stage === 2 && group === 'A') {
-            if (!confirm('?숇즺 硫붾え ?④퀎濡??대룞?섏떆寃좎뒿?덇퉴?')) return;
+            if (!confirm('?숇즺 ?쇰뱶諛??④퀎濡??대룞?섏떆寃좎뒿?덇퉴?')) return;
             $('btnToPeer').disabled = true;
-            setStatus('?숇즺 硫붾え ?④퀎瑜??щ뒗 以묒엯?덈떎...', 'info');
+            setStatus('?숇즺 ?쇰뱶諛??④퀎瑜??щ뒗 以묒엯?덈떎...', 'info');
             google.script.run.withSuccessHandler(function(res){
-              setStatus('?숇즺 硫붾え ?④퀎媛 ?대졇?듬땲??', 'success');
+              setStatus('?숇즺 ?쇰뱶諛??④퀎媛 ?대졇?듬땲??', 'success');
               syncSessionState(res);
             }).withFailureHandler(function(err){
               $('btnToPeer').disabled = false;
@@ -1662,7 +1541,7 @@
 
         function onGoToPreviousStage(event){
           if (!hasGas) return;
-          if (!state.sessionKey) { setStatus('?몄뀡???쒖꽦?붾릺吏 ?딆븯?듬땲??', 'error'); return; }
+          if (!state.sessionKey) { setStatus('?몄뀡???앹꽦?섏? ?딆븯?듬땲??', 'error'); return; }
           const currentStage = Number(state.stage || 1);
           const prevStage = getPreviousStageNumber();
           if (prevStage >= currentStage) {
@@ -1700,7 +1579,7 @@
         function onSavePeerNotes(){
           if (!hasGas) return;
           if (state.lastPeerNotesSaveTime && Date.now() - state.lastPeerNotesSaveTime < 2000) {
-             setStatus('?좎떆 ???ㅼ떆 ??ν빐二쇱꽭??', 'warn');
+             setStatus('?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??', 'warn');
              return;
           }
           state.lastPeerNotesSaveTime = Date.now();
@@ -1712,15 +1591,15 @@
           const text = source ? source.value : '';
           if (!text.trim()) {
             $('btnNotesSave').disabled = false;
-            setStatus('3단계 수정 글을 입력하세요.', 'warn');
+            setStatus('3?④퀎 ?섏젙 湲???낅젰?섏꽭??', 'warn');
             return;
           }
           $('btnNotesSave').disabled = true;
-          setStatus('3단계 수정 글을 저장하는 중입니다...', 'info');
+          setStatus('3?④퀎 ?섏젙 湲????ν븯??以묒엯?덈떎...', 'info');
           const cleanedText = text.trim();
           google.script.run.withSuccessHandler(function(res){
             state.localStage3Memo = cleanedText;
-            setStatus('3단계 수정 글이 저장되었습니다.', 'success');
+            setStatus('3?④퀎 ?섏젙 湲????λ릺?덉뒿?덈떎.', 'success');
             syncSessionState(res);
           }).withFailureHandler(function(err){
             $('btnNotesSave').disabled = false;
@@ -1776,8 +1655,8 @@
         }
 
         function formatDictionaryDirection(direction){
-          if (direction === 'ko-en') return '?쒋넂??;
-          if (direction === 'en-ko') return '?곣넂??;
+          if (direction === 'ko-en') return '한→영';
+          if (direction === 'en-ko') return '영→한';
           return '';
         }
 
@@ -2081,10 +1960,10 @@
 
         function buildChatMeta(channel, message, ts, pending){
           let name = '';
-          if (message.role === 'ai') name = channel === 'ai' ? 'AI ?쒗꽣' : 'AI';
-          else if (message.role === 'system') name = '?쒖뒪??;
-          else name = message.senderName || message.senderId || '?ъ슜??;
-          return name + ' 쨌 ' + (pending ? '?꾩넚 以?..' : formatTime(ts));
+          if (message.role === 'ai') name = channel === 'ai' ? 'AI 튜터' : 'AI';
+          else if (message.role === 'system') name = '시스템';
+          else name = message.senderName || message.senderId || '사용자';
+          return name + ' · ' + (pending ? '전송 중...' : formatTime(ts));
         }
 
         function pollAiMessages(){
@@ -2240,7 +2119,7 @@
         function handleError(err){
           let msg = err && err.message ? err.message : (typeof err === 'string' ? err : '?????녿뒗 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.');
           if (msg.includes('429') || msg.includes('rate limit') || msg.includes('quota')) {
-            msg = '?붿껌???덈Т 留롮뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.';
+            msg = '?붿껌???덈Т 留롮뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??';
           }
           console.error(err);
           setStatus(msg, 'error');
@@ -2259,33 +2138,33 @@
         function formatStageName(step){
           const group = (state.group || '').toUpperCase();
           switch (Number(step)) {
-            case 1: return '1?④퀎 ?ъ쟾 湲?곌린';
-            case 2: return group === 'B' ? '2?④퀎 ?숇즺 ?쇰뱶諛? : '2?④퀎 AI ?쇰뱶諛?;
-            case 3: return '3?④퀎 湲?곌린 ?섏젙 愿??硫붾え';
-            case 4: return '4?④퀎 理쒖쥌 ?섏젙 諛??쒖텧';
-            default: return step + '?④퀎';
+            case 1: return '1단계 사전 글쓰기';
+            case 2: return group === 'B' ? '2단계 동료 피드백' : '2단계 AI 피드백';
+            case 3: return '3단계 글쓰기 수정';
+            case 4: return '4단계 최종 수정 및 제출';
+            default: return step + '단계';
           }
         }
 
         function describePresence(info){
-          if (!info) return '?ㅽ봽?쇱씤';
-          if (info.online) return '?⑤씪??쨌 ' + formatRelative(info.lastSeen || Date.now());
-          if (info.lastSeen) return '?ㅽ봽?쇱씤 쨌 留덉?留??묒냽 ' + formatRelative(info.lastSeen);
-          return '?ㅽ봽?쇱씤';
+          if (!info) return '오프라인';
+          if (info.online) return '온라인 · ' + formatRelative(info.lastSeen || Date.now());
+          if (info.lastSeen) return '오프라인 · 마지막 접속 ' + formatRelative(info.lastSeen);
+          return '오프라인';
         }
 
         function formatRelative(ms){
           if (!ms) return '';
           const diff = Date.now() - ms;
-          if (diff < 0) return '諛⑷툑';
+          if (diff < 0) return '방금';
           const seconds = Math.floor(diff / 1000);
-          if (seconds < 60) return '諛⑷툑';
+          if (seconds < 60) return '방금';
           const minutes = Math.floor(seconds / 60);
-          if (minutes < 60) return minutes + '遺???;
+          if (minutes < 60) return minutes + '분 전';
           const hours = Math.floor(minutes / 60);
-          if (hours < 24) return hours + '?쒓컙 ??;
+          if (hours < 24) return hours + '시간 전';
           const days = Math.floor(hours / 24);
-          return days + '????;
+          return days + '일 전';
         }
 
         function escapeHtml(str){
