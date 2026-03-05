@@ -325,13 +325,13 @@
               try {
                 payload = JSON.parse(text);
               } catch (err) {
-                console.error('?쒕쾭 ?묐떟 ?뚯떛 ?ㅽ뙣', err, text);
-                throw new Error('?쒕쾭 ?묐떟???쎌쓣 ???놁뒿?덈떎.');
+                console.error('서버 응답 파싱 실패', err, text);
+                throw new Error('서버 응답을 읽을 수 없습니다.');
               }
             }
             if (!response.ok) {
               const message = (payload && (payload.error || payload.message)) || response.statusText;
-              const error = new Error(message || '?붿껌???ㅽ뙣?덉뒿?덈떎.');
+              const error = new Error(message || '요청에 실패했습니다.');
               error.status = response.status;
               error.details = payload;
               throw error;
@@ -1120,7 +1120,7 @@
           readonly.textContent = completed ? storedText : '';
           const submitBtn = $('btnPreSubmit');
           if (submitBtn) submitBtn.disabled = !isStageActive || completed || !textarea.value.trim();
-          info.textContent = completed ? '?쒖텧 ?쒓컙: ' + formatDate(submittedAt) : '?ъ쟾 湲?곌린瑜??묒꽦?섍퀬 ?쒖텧?섏꽭??';
+          info.textContent = completed ? '제출 시간: ' + formatDate(submittedAt) : '사전 글쓰기를 작성하고 제출하세요.';
         }
 
         function renderDraftPanel(){
@@ -1229,7 +1229,7 @@
           if (memoEnabled && selfPreview) state.localStage3Memo = selfPreview.value;
           saveBtn.disabled = !memoEnabled || !(selfPreview && selfPreview.value.trim());
 
-          nextBtn.textContent = '理쒖쥌 ?④퀎濡??대룞';
+          nextBtn.textContent = '최종 단계로 이동';
           const hasSaved = !!(state.writing.notes.text && state.writing.notes.updatedAt);
           nextBtn.disabled = !isMemoStage || !hasSaved || !ensureTimerGateForRender(4);
 
@@ -1239,10 +1239,10 @@
             const currentStage = Number(state.stage || 1);
             if (prevStage < currentStage) {
               backBtn.disabled = false;
-              backBtn.textContent = '??' + (formatStageName(prevStage) || (prevStage + '?④퀎')) + '濡??대룞';
+              backBtn.textContent = '← ' + (formatStageName(prevStage) || (prevStage + '단계')) + '로 이동';
             } else {
               backBtn.disabled = true;
-              backBtn.textContent = '?댁쟾 ?④퀎濡??대룞';
+              backBtn.textContent = '이전 단계로 이동';
             }
           }
         }
@@ -1283,10 +1283,10 @@
           }
           if (submitBtn) {
             submitBtn.disabled = !canEdit || !state.localFinalDraft.trim();
-            submitBtn.textContent = hasSubmitted ? '理쒖쥌 ?쒖텧 ?꾨즺' : '理쒖쥌 ?쒖텧';
+            submitBtn.textContent = hasSubmitted ? '최종 제출 완료' : '최종 제출';
           }
           if (info) {
-            info.textContent = hasSubmitted ? '理쒖쥌 ?쒖텧 ?쒓컙: ' + formatDate(finalSubmittedAt) : '?댁쟾??諛쏆? ?쇰뱶諛깃낵 硫붾え瑜?諛뷀깢?쇰줈 3?④퀎 湲?곌린瑜??먯쑀濡?쾶 ?섏젙?섏꽭??';
+            info.textContent = hasSubmitted ? '최종 제출 시간: ' + formatDate(finalSubmittedAt) : '이전에 받은 피드백과 메모를 바탕으로 3단계 글쓰기를 자유롭게 수정하세요.';
           }
 
           const backBtn = $('btnFinalBack');
@@ -1295,16 +1295,16 @@
             const currentStage = Number(state.stage || 1);
             if (prevStage < currentStage) {
               backBtn.disabled = false;
-              backBtn.textContent = '??' + (formatStageName(prevStage) || (prevStage + '?④퀎')) + '濡??대룞';
+              backBtn.textContent = '← ' + (formatStageName(prevStage) || (prevStage + '단계')) + '로 이동';
             } else {
               backBtn.disabled = true;
-              backBtn.textContent = '?댁쟾 ?④퀎濡??대룞';
+              backBtn.textContent = '이전 단계로 이동';
             }
           }
 
-          $('finalPreText').textContent = prewritingText || '?묒꽦??湲???놁뒿?덈떎.';
-          $('finalStage2Memo').textContent = stage2Memo || 'AI ?쇰뱶諛?湲곕컲 ?섏젙 硫붾え媛 ?꾩쭅 ?놁뒿?덈떎.';
-          $('finalStage3Memo').textContent = stage3Memo || '?숇즺 ?쇰뱶諛?湲곕컲 ?섏젙 硫붾え媛 ?꾩쭅 ?놁뒿?덈떎.';
+          $('finalPreText').textContent = prewritingText || '작성된 글이 없습니다.';
+          $('finalStage2Memo').textContent = stage2Memo || 'AI 피드백 기반 수정 메모가 아직 없습니다.';
+          $('finalStage3Memo').textContent = stage3Memo || '동료 피드백 기반 수정 메모가 아직 없습니다.';
         }
 
         function renderRightPanels(){
@@ -1334,21 +1334,21 @@
           const infoEl = $('partnerInfoBox');
           if (!nameEl || !infoEl) return;
           if (partner) {
-            nameEl.textContent = (partner.name || '?숇즺') + ' ?숈깮';
+            nameEl.textContent = (partner.name || '동료') + ' 학생';
             const peerStageName = formatStageName(partner.stage || 1);
             if (stage === 2 && group === 'B') {
-              infoEl.textContent = '?ъ쟾 湲??寃??以묒엯?덈떎. ?숇즺 ?④퀎: ' + peerStageName;
+              infoEl.textContent = '사전 글쓰기 확인 중입니다. 동료 단계: ' + peerStageName;
             } else if (stage === 3 && group === 'A') {
-              infoEl.textContent = '?섏젙 湲??寃??以묒엯?덈떎. ?숇즺 ?④퀎: ' + peerStageName;
+              infoEl.textContent = '수정 글 확인 중입니다. 동료 단계: ' + peerStageName;
             } else {
-              infoEl.textContent = '?꾩옱 ?④퀎: ' + peerStageName;
+              infoEl.textContent = '현재 단계: ' + peerStageName;
             }
           } else {
-            nameEl.textContent = '?숇즺 ?뺣낫瑜?遺덈윭?ㅻ뒗 以?..';
+            nameEl.textContent = '동료 정보를 불러오는 중...';
             if (group === 'A' || group === 'B') {
-              infoEl.textContent = '?숇즺 留ㅼ묶 ?뺣낫瑜?湲곕떎由ш퀬 ?덉뒿?덈떎.';
+              infoEl.textContent = '동료 매칭 정보를 기다리고 있습니다.';
             } else {
-              infoEl.textContent = '???④퀎?먯꽌???숇즺 ?뺣낫媛 ?꾩슂?섏? ?딆뒿?덈떎.';
+              infoEl.textContent = '이 단계에서는 동료 정보가 필요하지 않습니다.';
             }
           }
         }
@@ -1438,13 +1438,13 @@
 
         function onSubmitPrewriting(){
           if (!hasGas) return;
-          if (!state.sessionKey) { setStatus('?몄뀡???앹꽦?섏? ?딆븯?듬땲??', 'error'); return; }
+          if (!state.sessionKey) { setStatus('세션이 생성되지 않았습니다.', 'error'); return; }
           const text = $('prewritingInput').value.trim();
-          if (!text) { setStatus('?ъ쟾 湲?곌린 ?댁슜???낅젰?섏꽭??', 'warn'); return; }
+          if (!text) { setStatus('사전 글쓰기 내용을 입력하세요.', 'warn'); return; }
           $('btnPreSubmit').disabled = true;
-          setStatus('?ъ쟾 湲?곌린瑜??쒖텧?섎뒗 以묒엯?덈떎...', 'info');
+          setStatus('사전 글쓰기를 제출하는 중입니다...', 'info');
           google.script.run.withSuccessHandler(function(res){
-            setStatus('?ъ쟾 湲?곌린媛 ?쒖텧?섏뿀?듬땲??', 'success');
+            setStatus('사전 글쓰기가 제출되었습니다.', 'success');
             syncSessionState(res);
           }).withFailureHandler(function(err){
             $('btnPreSubmit').disabled = false;
@@ -1455,17 +1455,17 @@
         function onSaveDraft(){
           if (!hasGas) return;
           if (state.lastDraftSaveTime && Date.now() - state.lastDraftSaveTime < 2000) {
-             setStatus('?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??', 'warn');
+             setStatus('잠시 후 다시 시도해 주세요.', 'warn');
              return;
           }
           state.lastDraftSaveTime = Date.now();
           const text = $('prewritingPreviewInput').value.trim();
-          if (!text) { setStatus('2?④퀎 ?섏젙 湲???낅젰?섏꽭??', 'warn'); return; }
+          if (!text) { setStatus('2단계 수정 글을 입력하세요.', 'warn'); return; }
           $('btnSaveDraft').disabled = true;
-          setStatus('2?④퀎 ?섏젙 湲????ν븯??以묒엯?덈떎...', 'info');
+          setStatus('2단계 수정 글을 저장하는 중입니다...', 'info');
           google.script.run.withSuccessHandler(function(res){
             state.localDraftBuffer = text;
-            setStatus('2?④퀎 ?섏젙 湲????λ릺?덉뒿?덈떎.', 'success');
+            setStatus('2단계 수정 글이 저장되었습니다.', 'success');
             syncSessionState(res);
           }).withFailureHandler(function(err){
             $('btnSaveDraft').disabled = false;
@@ -1480,40 +1480,40 @@
           const targetStage = group === 'C' ? 4 : 3;
           if (!ensureTimerGate(targetStage)) return;
           if (stage === 2 && group === 'A') {
-            if (!confirm('?숇즺 ?쇰뱶諛??④퀎濡??대룞?섏떆寃좎뒿?덇퉴?')) return;
+            if (!confirm('동료 피드백 단계로 이동하시겠습니까?')) return;
             $('btnToPeer').disabled = true;
-            setStatus('?숇즺 ?쇰뱶諛??④퀎瑜??щ뒗 以묒엯?덈떎...', 'info');
+            setStatus('동료 피드백 단계로 이동하는 중입니다...', 'info');
             google.script.run.withSuccessHandler(function(res){
-              setStatus('?숇즺 ?쇰뱶諛??④퀎媛 ?대졇?듬땲??', 'success');
+              setStatus('동료 피드백 단계로 이동했습니다.', 'success');
               syncSessionState(res);
             }).withFailureHandler(function(err){
               $('btnToPeer').disabled = false;
               handleError(err);
             }).advanceToPeerStage(state.sessionKey);
           } else if (stage === 2 && group === 'B') {
-            if (!confirm('AI ?쇰뱶諛??④퀎濡??대룞?섏떆寃좎뒿?덇퉴?')) return;
+            if (!confirm('AI 피드백 단계로 이동하시겠습니까?')) return;
             $('btnToPeer').disabled = true;
-            setStatus('AI ?쇰뱶諛??④퀎瑜??щ뒗 以묒엯?덈떎...', 'info');
+            setStatus('AI 피드백 단계로 이동하는 중입니다...', 'info');
             google.script.run.withSuccessHandler(function(res){
-              setStatus('AI ?쇰뱶諛??④퀎媛 ?대졇?듬땲??', 'success');
+              setStatus('AI 피드백 단계로 이동했습니다.', 'success');
               syncSessionState(res);
             }).withFailureHandler(function(err){
               $('btnToPeer').disabled = false;
               handleError(err);
             }).advanceToPeerStage(state.sessionKey);
           } else if (stage === 2 && group === 'C') {
-            if (!confirm('理쒖쥌 ?④퀎濡??대룞?섏떆寃좎뒿?덇퉴?')) return;
+            if (!confirm('최종 단계로 이동하시겠습니까?')) return;
             $('btnToPeer').disabled = true;
-            setStatus('理쒖쥌 ?④퀎瑜??щ뒗 以묒엯?덈떎...', 'info');
+            setStatus('최종 단계로 이동하는 중입니다...', 'info');
             google.script.run.withSuccessHandler(function(res){
-              setStatus('理쒖쥌 ?④퀎濡??대룞?덉뒿?덈떎.', 'success');
+              setStatus('최종 단계로 이동했습니다.', 'success');
               syncSessionState(res);
             }).withFailureHandler(function(err){
               $('btnToPeer').disabled = false;
               handleError(err);
             }).advanceToPeerStage(state.sessionKey);
         } else {
-            setStatus('?꾩옱 ?④퀎?먯꽌???대룞?????놁뒿?덈떎.', 'warn');
+            setStatus('현재 단계에서는 이동할 수 없습니다.', 'warn');
           }
         }
 
@@ -1524,37 +1524,37 @@
           const btn = $('btnPeerNext');
           if (!ensureTimerGate(4)) return;
           if (stage === 3 && (group === 'A' || group === 'B')) {
-            if (!confirm('理쒖쥌 ?④퀎濡??대룞?섏떆寃좎뒿?덇퉴?')) return;
+            if (!confirm('최종 단계로 이동하시겠습니까?')) return;
             if (btn) btn.disabled = true;
-            setStatus('理쒖쥌 ?④퀎瑜??щ뒗 以묒엯?덈떎...', 'info');
+            setStatus('최종 단계로 이동하는 중입니다...', 'info');
             google.script.run.withSuccessHandler(function(res){
-              setStatus('理쒖쥌 ?④퀎濡??대룞?덉뒿?덈떎.', 'success');
+              setStatus('최종 단계로 이동했습니다.', 'success');
               syncSessionState(res);
             }).withFailureHandler(function(err){
               if (btn) btn.disabled = false;
               handleError(err);
             }).advanceToFinalStage(state.sessionKey);
         } else {
-            setStatus('?꾩옱 ?④퀎?먯꽌???대룞?????놁뒿?덈떎.', 'warn');
+            setStatus('현재 단계에서는 이동할 수 없습니다.', 'warn');
           }
         }
 
         function onGoToPreviousStage(event){
           if (!hasGas) return;
-          if (!state.sessionKey) { setStatus('?몄뀡???앹꽦?섏? ?딆븯?듬땲??', 'error'); return; }
+          if (!state.sessionKey) { setStatus('세션이 생성되지 않았습니다.', 'error'); return; }
           const currentStage = Number(state.stage || 1);
           const prevStage = getPreviousStageNumber();
           if (prevStage >= currentStage) {
-            setStatus('?댁쟾 ?④퀎媛 ?놁뒿?덈떎.', 'warn');
+            setStatus('이전 단계가 없습니다.', 'warn');
             return;
           }
-          const prevLabel = formatStageName(prevStage) || (prevStage + '?④퀎');
-          if (!confirm(prevLabel + '濡??대룞?섏떆寃좎뒿?덇퉴?')) return;
+          const prevLabel = formatStageName(prevStage) || (prevStage + '단계');
+          if (!confirm(prevLabel + '로 이동하시겠습니까?')) return;
           const trigger = event && event.currentTarget;
           if (trigger) trigger.disabled = true;
           state.stageChangePending = true;
           updateStepIndicator();
-          setStatus(prevLabel + '濡??대룞?섎뒗 以묒엯?덈떎...', 'info');
+          setStatus(prevLabel + '로 이동하는 중입니다...', 'info');
           google.script.run.withSuccessHandler(function(res){
             if (trigger) trigger.disabled = false;
             state.stageChangePending = false;
@@ -1563,9 +1563,9 @@
                 state.stage = Number(res.stage);
               }
               syncSessionState(res);
-              setStatus(formatStageName(res.stage) + '濡??대룞?덉뒿?덈떎.', 'success');
+              setStatus(formatStageName(res.stage) + '로 이동했습니다.', 'success');
             } else {
-              setStatus('?댁쟾 ?④퀎濡??대룞?덉뒿?덈떎.', 'success');
+              setStatus('이전 단계로 이동했습니다.', 'success');
               syncSessionState(res || {});
             }
           }).withFailureHandler(function(err){
@@ -1579,27 +1579,27 @@
         function onSavePeerNotes(){
           if (!hasGas) return;
           if (state.lastPeerNotesSaveTime && Date.now() - state.lastPeerNotesSaveTime < 2000) {
-             setStatus('?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??', 'warn');
+             setStatus('잠시 후 다시 시도해 주세요.', 'warn');
              return;
           }
           state.lastPeerNotesSaveTime = Date.now();
           const stage = Number(state.stage || 1);
           const group = (state.group || '').toUpperCase();
           const isMemoStage = stage === 3 && (group === 'A' || group === 'B');
-          if (!isMemoStage) { setStatus('3?④퀎 硫붾え ?④퀎?먯꽌留???ν븷 ???덉뒿?덈떎.', 'warn'); return; }
+          if (!isMemoStage) { setStatus('3단계 메모 단계에서만 저장할 수 있습니다.', 'warn'); return; }
           const source = $('peerStage3Self');
           const text = source ? source.value : '';
           if (!text.trim()) {
             $('btnNotesSave').disabled = false;
-            setStatus('3?④퀎 ?섏젙 湲???낅젰?섏꽭??', 'warn');
+            setStatus('3단계 수정 글을 입력하세요.', 'warn');
             return;
           }
           $('btnNotesSave').disabled = true;
-          setStatus('3?④퀎 ?섏젙 湲????ν븯??以묒엯?덈떎...', 'info');
+          setStatus('3단계 수정 글을 저장하는 중입니다...', 'info');
           const cleanedText = text.trim();
           google.script.run.withSuccessHandler(function(res){
             state.localStage3Memo = cleanedText;
-            setStatus('3?④퀎 ?섏젙 湲????λ릺?덉뒿?덈떎.', 'success');
+            setStatus('3단계 수정 글이 저장되었습니다.', 'success');
             syncSessionState(res);
           }).withFailureHandler(function(err){
             $('btnNotesSave').disabled = false;
@@ -1609,16 +1609,16 @@
         function onSubmitFinalWriting(){
           if (!hasGas) return;
           const stage = Number(state.stage || 1);
-          if (stage !== 4) { setStatus('理쒖쥌 ?④퀎?먯꽌留??쒖텧?????덉뒿?덈떎.', 'warn'); return; }
+          if (stage !== 4) { setStatus('최종 단계에서만 제출할 수 있습니다.', 'warn'); return; }
           const textArea = $('finalInput');
           const content = (state.localFinalDraft || (textArea ? textArea.value : '') || '').trim();
-          if (!content) { setStatus('理쒖쥌 湲???묒꽦?섏꽭??', 'warn'); return; }
-          if (!confirm('?꾩옱 ?묒꽦??理쒖쥌 湲???쒖텧?섏떆寃좎뒿?덇퉴? ?쒖텧 ?꾩뿉???섏젙?????놁뒿?덈떎.')) return;
+          if (!content) { setStatus('최종 글을 작성하세요.', 'warn'); return; }
+          if (!confirm('현재 작성한 최종 글을 제출하시겠습니까? 제출 후에는 수정할 수 없습니다.')) return;
           const btn = $('btnFinalSubmit');
           if (btn) btn.disabled = true;
-          setStatus('理쒖쥌 寃곌낵瑜??쒖텧?섎뒗 以묒엯?덈떎...', 'info');
+          setStatus('최종 결과를 제출하는 중입니다...', 'info');
           google.script.run.withSuccessHandler(function(res){
-            setStatus('理쒖쥌 ?쒖텧???꾨즺?섏뿀?듬땲??', 'success');
+            setStatus('최종 제출이 완료되었습니다.', 'success');
             syncSessionState(res);
           }).withFailureHandler(function(err){
             if (btn) btn.disabled = false;
@@ -1663,9 +1663,9 @@
         function onDictionarySearch(){
           if (!hasGas) return;
           const query = $('dictQuery').value.trim();
-          if (!query) { setStatus('寃?됱뼱瑜??낅젰?섏꽭??', 'warn'); return; }
+          if (!query) { setStatus('검색어를 입력하세요.', 'warn'); return; }
           $('btnDictSearch').disabled = true;
-          setStatus('?ъ쟾??議고쉶?섎뒗 以묒엯?덈떎...', 'info');
+          setStatus('사전을 조회하는 중입니다...', 'info');
           google.script.run.withSuccessHandler(function(res){
             $('btnDictSearch').disabled = false;
             if (res && res.ok && res.data) {
@@ -1684,14 +1684,14 @@
               state.dictionaryHistory.push(historyEntry);
               if (state.dictionaryHistory.length > 10) state.dictionaryHistory = state.dictionaryHistory.slice(-10);
               renderDictionaryHistory();
-              setStatus('?ъ쟾 寃??寃곌낵媛 ?낅뜲?댄듃?섏뿀?듬땲??', 'success');
+              setStatus('사전 검색 결과가 업데이트되었습니다.', 'success');
         } else {
-              renderDictionaryResult(null, res && res.message ? res.message : '?ъ쟾 寃곌낵媛 ?놁뒿?덈떎.');
-              setStatus(res && res.message ? res.message : '?ъ쟾 寃?됱뿉 ?ㅽ뙣?덉뒿?덈떎.', 'warn');
+              renderDictionaryResult(null, res && res.message ? res.message : '사전 결과가 없습니다.');
+              setStatus(res && res.message ? res.message : '사전 검색에 실패했습니다.', 'warn');
             }
           }).withFailureHandler(function(err){
             $('btnDictSearch').disabled = false;
-            renderDictionaryResult(null, err && err.message ? err.message : '?ъ쟾 寃??以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.');
+            renderDictionaryResult(null, err && err.message ? err.message : '사전 검색 중 오류가 발생했습니다.');
             handleError(err);
           }).lookupDictionary(query);
         }
@@ -1703,7 +1703,7 @@
           if (!data) {
             const word = document.createElement('div');
             word.className = 'dict-word';
-            word.textContent = message || '寃??寃곌낵媛 ?놁뒿?덈떎.';
+            word.textContent = message || '검색 결과가 없습니다.';
             result.appendChild(word);
           return;
         }
@@ -1716,7 +1716,7 @@
           if (primaryMeaning && primaryMeaning !== data.word) headingParts.push(primaryMeaning);
           const headingEl = document.createElement('div');
           headingEl.className = 'dict-word';
-          headingEl.textContent = headingParts.length ? headingParts.join(' 쨌 ') : (data.word || '?ъ쟾 寃??寃곌낵');
+          headingEl.textContent = headingParts.length ? headingParts.join(' · ') : (data.word || '사전 검색 결과');
           result.appendChild(headingEl);
           if (data.pronunciation) {
             const pron = document.createElement('div');
@@ -1774,11 +1774,11 @@
 
         function sendAiMessage(){
           if (!hasGas) return;
-          if (!state.aiChat.sessionId) { setStatus('AI ?몄뀡??以鍮꾨릺吏 ?딆븯?듬땲??', 'error'); return; }
+          if (!state.aiChat.sessionId) { setStatus('AI 세션이 준비되지 않았습니다.', 'error'); return; }
           const stage = Number(state.stage || 1);
           const group = (state.group || '').toUpperCase();
           const isAiStage = (stage === 2 && (group === 'A' || group === 'C')) || (stage === 3 && group === 'B');
-          if (!isAiStage) { setStatus('AI ?쇰뱶諛??④퀎?먯꽌留??ъ슜?????덉뒿?덈떎.', 'warn'); return; }
+          if (!isAiStage) { setStatus('AI 피드백 단계에서만 사용할 수 있습니다.', 'warn'); return; }
           const input = $('aiInput');
           if (!input || input.disabled) return;
           const text = input.value.trim();
@@ -1823,7 +1823,7 @@
           const stage = Number(state.stage || 1);
           const group = (state.group || '').toUpperCase();
           const isPeerStage = (stage === 2 && group === 'B') || (stage === 3 && group === 'A');
-          if (!isPeerStage) { setStatus('?숇즺 ?묒뾽 ?④퀎?먯꽌留??ъ슜?????덉뒿?덈떎.', 'warn'); return; }
+          if (!isPeerStage) { setStatus('동료 작업 단계에서만 사용할 수 있습니다.', 'warn'); return; }
           const input = $('peerInput');
           if (!input || input.disabled) return;
           const text = input.value.trim();
@@ -2117,9 +2117,9 @@
         }
 
         function handleError(err){
-          let msg = err && err.message ? err.message : (typeof err === 'string' ? err : '?????녿뒗 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.');
+          let msg = err && err.message ? err.message : (typeof err === 'string' ? err : '알 수 없는 오류가 발생했습니다.');
           if (msg.includes('429') || msg.includes('rate limit') || msg.includes('quota')) {
-            msg = '?붿껌???덈Т 留롮뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??';
+            msg = '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
           }
           console.error(err);
           setStatus(msg, 'error');
@@ -2192,7 +2192,7 @@
               state.aiAvatarUrl = publicConfig.aiAvatarUrl || DEFAULT_AI_AVATAR;
               const promptEl = $('promptContent');
               if (promptEl) {
-                const promptText = publicConfig.promptContent || '?쒖떆臾몄씠 ?꾩쭅 ?깅줉?섏? ?딆븯?듬땲??';
+                const promptText = publicConfig.promptContent || '제시문이 아직 등록되지 않았습니다.';
                 promptEl.innerHTML = formatPromptHtml(promptText);
               }
             }).getPublicSettings();
