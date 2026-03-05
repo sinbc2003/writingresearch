@@ -2034,7 +2034,7 @@
 
         function formatPromptHtml(text){
           const escaped = escapeHtml(String(text || ''));
-          const withBold = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+          const withBold = escaped.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
           return withBold.replace(/\n/g, '<br/>');
         }
 
