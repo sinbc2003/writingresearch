@@ -40,7 +40,30 @@
       .login-actions { display: flex; gap: 12px; justify-content: flex-end; }
       .workspace { display: none; flex-direction: column; gap: 12px; flex: 1; overflow: hidden; min-height: 0; }
       .workspace-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 0; }
+      .toolbar-right { display: flex; align-items: center; gap: 10px; }
       .user-info { font-size: 14px; font-weight: 600; color: #475569; }
+      .session-timer {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid #dbeafe;
+        background: #eff6ff;
+        color: #1e40af;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .session-timer.warn {
+        border-color: #fde68a;
+        background: #fef9c3;
+        color: #92400e;
+      }
+      .session-timer.stopped {
+        border-color: #e2e8f0;
+        background: #f8fafc;
+        color: #475569;
+      }
       .status-bar { padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5f5; background: #eef2ff; color: #1e3a8a; font-size: 13px; line-height: 1.4; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
       .status-bar.success { border-color: #bbf7d0; background: #ecfdf5; color: #047857; }
       .status-bar.warn { border-color: #fde68a; background: #fef3c7; color: #92400e; }
@@ -178,7 +201,10 @@
       <div id="workspace" class="workspace">
         <div class="workspace-toolbar">
           <div id="userInfo" class="user-info"></div>
-          <button id="btnRestart" class="link-button" type="button">처음으로 돌아가기</button>
+          <div class="toolbar-right">
+            <div id="sessionTimer" class="session-timer stopped">타이머 대기</div>
+            <button id="btnRestart" class="link-button" type="button">처음으로 돌아가기</button>
+          </div>
           </div>
         <div id="statusBar" class="status-bar info">집단을 선택하고 로그인하세요.</div>
         <div id="stepIndicator" class="step-indicator">
@@ -487,6 +513,9 @@
             },
             lookupDictionary: function(query){
               return request('GET', 'dictionary', { searchParams: { q: query } });
+            },
+            getTimer: function(){
+              return request('GET', 'timer');
             }
           };
         }
@@ -551,6 +580,7 @@
           steps: {},
           partner: null,
           presence: null,
+          timer: null,
           status: { message: '집단을 선택하고 로그인하세요.', type: 'info' },
           aiChat: { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false },
           peerChat: { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false },
@@ -710,6 +740,7 @@
           state.steps = {};
           state.partner = null;
           state.presence = null;
+          state.timer = null;
           state.status = { message: '집단을 선택하고 로그인하세요.', type: 'info' };
           state.aiChat = { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false, awaitingResponse: false, welcomeShown: false };
           state.peerChat = { sessionId: '', lastTs: 0, rendered: {}, pending: {}, fetching: false };
@@ -788,7 +819,8 @@
             partner: res.partner,
             presence: res.presence,
             aiSessionId: res.aiSessionId,
-            peerSessionId: res.peerSessionId
+            peerSessionId: res.peerSessionId,
+            timer: res.timer
           };
           syncSessionState(sessionState);
           ensurePollers();
@@ -845,6 +877,7 @@
           state.steps = data.steps || state.steps;
           state.partner = data.partner || null;
           state.presence = data.presence || null;
+          if (data.timer) state.timer = data.timer;
 
           const currentStage = Number(state.stage || 1);
           if (currentStage === 4) {
@@ -880,6 +913,7 @@
 
         function renderWorkspace(){
           renderUserInfo();
+          renderSessionTimer();
           updateStepIndicator();
           updateStageVisibility();
           renderPrewritingPanel();
@@ -934,6 +968,97 @@
           }
         }
 
+        function getTimerUnlockedStage(){
+          const timer = state.timer;
+          if (!timer || !timer.running || !timer.startedAt) return 1;
+          const elapsed = Number(timer.elapsedSeconds || 0);
+          const d = timer.durations || {};
+          const t1 = Number(d.stage1PrewritingMinutes || 20) * 60;
+          const t2 = Number(d.stage2AiFeedbackMinutes || 20) * 60;
+          const t3 = Number(d.stage3PeerReviewMinutes || 10) * 60;
+          const t4 = Number(d.stage3PeerRevisionMinutes || 15) * 60;
+          const group = (state.group || '').toUpperCase();
+          if (elapsed < t1) return 1;
+          if (elapsed < t1 + t2) return 2;
+          if (group === 'C') return 4;
+          if (elapsed < t1 + t2 + t3 + t4) return 3;
+          return 4;
+        }
+
+        function getRequiredElapsedForStage(stage){
+          const d = (state.timer && state.timer.durations) || {};
+          const t1 = Number(d.stage1PrewritingMinutes || 20) * 60;
+          const t2 = Number(d.stage2AiFeedbackMinutes || 20) * 60;
+          const t3 = Number(d.stage3PeerReviewMinutes || 10) * 60;
+          const t4 = Number(d.stage3PeerRevisionMinutes || 15) * 60;
+          const group = (state.group || '').toUpperCase();
+          if (stage <= 1) return 0;
+          if (stage === 2) return t1;
+          if (stage === 3) return t1 + t2;
+          if (stage >= 4) {
+            if (group === 'C') return t1 + t2;
+            return t1 + t2 + t3 + t4;
+          }
+          return 0;
+        }
+
+        function formatRemainingSeconds(seconds){
+          const value = Math.max(0, Number(seconds || 0));
+          const mm = Math.floor(value / 60);
+          const ss = value % 60;
+          return String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+        }
+
+        function ensureTimerGate(targetStage){
+          const current = Number(state.stage || 1);
+          const target = Number(targetStage || current);
+          if (target <= current) return true;
+          const timer = state.timer;
+          if (!timer || !timer.running || !timer.startedAt) {
+            setStatus('관리자가 타이머를 시작한 뒤에만 다음 단계로 이동할 수 있습니다.', 'warn');
+            return false;
+          }
+          const required = getRequiredElapsedForStage(target);
+          const elapsed = Number(timer.elapsedSeconds || 0);
+          if (elapsed < required) {
+            setStatus('아직 단계 이동 시간이 아닙니다. 남은 시간: ' + formatRemainingSeconds(required - elapsed), 'warn');
+            return false;
+          }
+          return true;
+        }
+
+        function ensureTimerGateForRender(targetStage){
+          const current = Number(state.stage || 1);
+          const target = Number(targetStage || current);
+          if (target <= current) return true;
+          const timer = state.timer;
+          if (!timer || !timer.running || !timer.startedAt) return false;
+          const required = getRequiredElapsedForStage(target);
+          const elapsed = Number(timer.elapsedSeconds || 0);
+          return elapsed >= required;
+        }
+
+        function renderSessionTimer(){
+          const el = $('sessionTimer');
+          if (!el) return;
+          const timer = state.timer;
+          if (!timer || !timer.running || !timer.startedAt) {
+            el.textContent = '타이머 대기';
+            el.className = 'session-timer stopped';
+            return;
+          }
+          const phase = timer.currentPhase || null;
+          if (!phase) {
+            el.textContent = '수업 시간 종료';
+            el.className = 'session-timer warn';
+            return;
+          }
+          const remain = Number(phase.remainingSeconds || 0);
+          const label = String(phase.label || '진행 중');
+          el.textContent = label + ' · ' + formatRemainingSeconds(remain);
+          el.className = 'session-timer' + (remain <= 60 ? ' warn' : '');
+        }
+
         function updateStepIndicator(){
           const current = Number(state.stage || 1);
           const group = (state.group || '').toUpperCase();
@@ -967,12 +1092,6 @@
         function getHighestUnlockedStage(){
           let highest = Number(state.stage || 1) || 1;
           const steps = state.steps || {};
-          
-          // 1단계(사전 글쓰기)가 완료되면 이후 단계(2,3,4)를 모두 자유롭게 이동할 수 있도록 허용
-          if (steps.prewriting && steps.prewriting.completed) {
-            return 4;
-          }
-          
           const group = (state.group || '').toUpperCase();
           if (steps.prewriting && steps.prewriting.completed) {
             highest = Math.max(highest, 2);
@@ -981,11 +1100,17 @@
             if (steps.draft && steps.draft.saved) {
               highest = Math.max(highest, 3);
             }
+            if (steps.notes && steps.notes.saved) {
+              highest = Math.max(highest, 4);
+            }
             const finalUnlocked = Number(state.stage || 1) >= 4 || (state.writing && state.writing.final && (state.writing.final.text || Number(state.writing.final.submittedAt || 0))) || (steps.final && steps.final.submitted);
             if (finalUnlocked) {
               highest = Math.max(highest, 4);
             }
           } else if (group === 'C') {
+            if (steps.draft && steps.draft.saved) {
+              highest = Math.max(highest, 4);
+            }
             const finalUnlocked = Number(state.stage || 1) >= 4 || (state.writing && state.writing.final && (state.writing.final.text || Number(state.writing.final.submittedAt || 0))) || (steps.final && steps.final.submitted);
             if (finalUnlocked) {
               highest = Math.max(highest, 4);
@@ -1005,7 +1130,10 @@
           const group = (state.group || '').toUpperCase();
           if (desired === 3 && !(group === 'A' || group === 'B')) return false;
           const highest = getHighestUnlockedStage();
-          return desired <= highest;
+          if (desired > highest) return false;
+          const current = Number(state.stage || 1);
+          if (desired > current && getTimerUnlockedStage() < desired) return false;
+          return true;
         }
 
         function navigateToStage(targetStage){
@@ -1022,6 +1150,7 @@
             setStatus('해당 단계로 이동할 수 없습니다.', 'warn');
             return;
           }
+          if (!ensureTimerGate(target)) return;
           if (!hasGas) return;
           if (!state.sessionKey) { setStatus('세션이 활성화되지 않았습니다.', 'error'); return; }
           if (state.stageChangePending) return;
@@ -1102,12 +1231,14 @@
           const moveBtn = $('btnToPeer');
           if (moveBtn) {
             const hasSaved = !!savedText && Number(state.writing.draft.savedAt || 0) > 0;
+            const nextStage = group === 'C' ? 4 : 3;
+            const timerReady = ensureTimerGateForRender(nextStage);
             let nextLabel = '다음 단계로 이동';
             if (group === 'A') nextLabel = '동료 피드백 단계로 이동';
             else if (group === 'C') nextLabel = '최종 단계로 이동';
             else if (group === 'B') nextLabel = 'AI 피드백 단계로 이동';
             moveBtn.textContent = nextLabel;
-            moveBtn.disabled = !hasSaved;
+            moveBtn.disabled = !hasSaved || !timerReady;
           }
           if (titleEl) {
             if (group === 'B') titleEl.textContent = '2단계 · 동료 메모';
@@ -1190,7 +1321,7 @@
 
           nextBtn.textContent = '최종 단계로 이동';
           const hasSaved = !!(state.writing.notes.text && state.writing.notes.updatedAt);
-          nextBtn.disabled = !isMemoStage || !hasSaved;
+          nextBtn.disabled = !isMemoStage || !hasSaved || !ensureTimerGateForRender(4);
 
           const backBtn = $('btnStage3Back');
           if (backBtn) {
@@ -1402,13 +1533,8 @@
           $('btnPreSubmit').disabled = true;
           setStatus('사전 글쓰기를 제출하는 중입니다...', 'info');
           google.script.run.withSuccessHandler(function(res){
-            state.stage = Math.max(2, Number(state.stage || 1));
-            setStatus('사전 글쓰기가 제출되었습니다. 2단계를 진행하세요.', 'success');
+            setStatus('사전 글쓰기가 제출되었습니다.', 'success');
             syncSessionState(res);
-            if (state.stage < 2) {
-              state.stage = 2;
-              renderWorkspace();
-            }
           }).withFailureHandler(function(err){
             $('btnPreSubmit').disabled = false;
             handleError(err);
@@ -1440,6 +1566,8 @@
           if (!hasGas) return;
           const stage = Number(state.stage || 1);
           const group = (state.group || '').toUpperCase();
+          const targetStage = group === 'C' ? 4 : 3;
+          if (!ensureTimerGate(targetStage)) return;
           if (stage === 2 && group === 'A') {
             if (!confirm('동료 메모 단계로 이동하시겠습니까?')) return;
             $('btnToPeer').disabled = true;
@@ -1483,6 +1611,7 @@
           const stage = Number(state.stage || 1);
           const group = (state.group || '').toUpperCase();
           const btn = $('btnPeerNext');
+          if (!ensureTimerGate(4)) return;
           if (stage === 3 && (group === 'A' || group === 'B')) {
             if (!confirm('최종 단계로 이동하시겠습니까?')) return;
             if (btn) btn.disabled = true;
@@ -2119,6 +2248,21 @@
           return days + '일 전';
         }
 
+        function escapeHtml(str){
+          return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
+
+        function formatPromptHtml(text){
+          const escaped = escapeHtml(String(text || ''));
+          const withBold = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+          return withBold.replace(/\n/g, '<br/>');
+        }
+
         function loadPublicSettings(){
           if (!hasGas) return;
           try {
@@ -2129,7 +2273,8 @@
               state.aiAvatarUrl = publicConfig.aiAvatarUrl || DEFAULT_AI_AVATAR;
               const promptEl = $('promptContent');
               if (promptEl) {
-                promptEl.textContent = publicConfig.promptContent || '제시문이 아직 등록되지 않았습니다.';
+                const promptText = publicConfig.promptContent || '제시문이 아직 등록되지 않았습니다.';
+                promptEl.innerHTML = formatPromptHtml(promptText);
               }
             }).getPublicSettings();
           } catch (e) {

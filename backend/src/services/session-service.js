@@ -1,4 +1,4 @@
-import createError from 'http-errors';
+﻿import createError from 'http-errors';
 import { v4 as uuid } from 'uuid';
 
 const emptyWritingState = () => ({ text: '', submittedAt: 0, savedAt: 0, updatedAt: 0 });
@@ -6,7 +6,7 @@ const emptyWritingState = () => ({ text: '', submittedAt: 0, savedAt: 0, updated
 function normalizeGroup(group) {
   const value = String(group || '').trim().toUpperCase();
   if (!['A', 'B', 'C'].includes(value)) {
-    throw createError(400, '지원하지 않는 집단입니다. (A, B, C 중에서 선택)');
+    throw createError(400, '吏?먰븯吏 ?딅뒗 吏묐떒?낅땲?? (A, B, C 以묒뿉???좏깮)');
   }
   return value;
 }
@@ -54,13 +54,190 @@ function computeNextStageForAdvance(session) {
   return Math.min(4, current + 1);
 }
 
+const DEFAULT_TIMER_DURATIONS = {
+  stage1PrewritingMinutes: 20,
+  stage2AiFeedbackMinutes: 20,
+  stage3PeerReviewMinutes: 10,
+  stage3PeerRevisionMinutes: 15,
+  stage4FinalRevisionMinutes: 20
+};
+
+function toPositiveInt(value, fallback) {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 0) return fallback;
+  return Math.round(num);
+}
+
+function normalizeTimer(timer = {}) {
+  const durations = timer?.durations || {};
+  return {
+    running: Boolean(timer.running),
+    startedAt: Number(timer.startedAt || 0),
+    updatedAt: Number(timer.updatedAt || 0),
+    durations: {
+      stage1PrewritingMinutes: toPositiveInt(
+        durations.stage1PrewritingMinutes,
+        DEFAULT_TIMER_DURATIONS.stage1PrewritingMinutes
+      ),
+      stage2AiFeedbackMinutes: toPositiveInt(
+        durations.stage2AiFeedbackMinutes,
+        DEFAULT_TIMER_DURATIONS.stage2AiFeedbackMinutes
+      ),
+      stage3PeerReviewMinutes: toPositiveInt(
+        durations.stage3PeerReviewMinutes,
+        DEFAULT_TIMER_DURATIONS.stage3PeerReviewMinutes
+      ),
+      stage3PeerRevisionMinutes: toPositiveInt(
+        durations.stage3PeerRevisionMinutes,
+        DEFAULT_TIMER_DURATIONS.stage3PeerRevisionMinutes
+      ),
+      stage4FinalRevisionMinutes: toPositiveInt(
+        durations.stage4FinalRevisionMinutes,
+        DEFAULT_TIMER_DURATIONS.stage4FinalRevisionMinutes
+      )
+    }
+  };
+}
+
+function buildTimerPhases(timer) {
+  const d = timer.durations;
+  return [
+    { key: 'stage1', label: 'Stage 1 Prewriting', seconds: d.stage1PrewritingMinutes * 60 },
+    { key: 'stage2', label: 'Stage 2 AI Feedback', seconds: d.stage2AiFeedbackMinutes * 60 },
+    { key: 'stage3-review', label: 'Stage 3 Peer Reading', seconds: d.stage3PeerReviewMinutes * 60 },
+    { key: 'stage3-revise', label: 'Stage 3 Peer Revision', seconds: d.stage3PeerRevisionMinutes * 60 },
+    { key: 'stage4', label: 'Stage 4 Final Revision', seconds: d.stage4FinalRevisionMinutes * 60 }
+  ];
+}
+
 export function createSessionService(dataStore) {
-  if (!dataStore) throw new Error('dataStore가 필요합니다.');
+  if (!dataStore) throw new Error('dataStore媛 ?꾩슂?⑸땲??');
 
   let rosterCache = null;
   let rosterPairingsCache = [];
   let rosterFetchedAt = 0;
   const ROSTER_CACHE_TTL = 60 * 1000;
+  let timerCache = null;
+  let timerFetchedAt = 0;
+  const TIMER_CACHE_TTL = 1000;
+
+  async function getTimer(forceReload = false) {
+    const now = Date.now();
+    if (!forceReload && timerCache && now - timerFetchedAt < TIMER_CACHE_TTL) {
+      return timerCache;
+    }
+    const stored = typeof dataStore.getTimer === 'function' ? await dataStore.getTimer() : {};
+    timerCache = normalizeTimer(stored || {});
+    timerFetchedAt = now;
+    return timerCache;
+  }
+
+  function buildTimerSnapshot(timer, mode = 'A') {
+    const normalized = normalizeTimer(timer);
+    const phases = buildTimerPhases(normalized);
+    const now = Date.now();
+    const elapsedSeconds = normalized.running && normalized.startedAt
+      ? Math.max(0, Math.floor((now - normalized.startedAt) / 1000))
+      : 0;
+
+    let acc = 0;
+    let currentPhase = null;
+    for (let i = 0; i < phases.length; i += 1) {
+      const phase = phases[i];
+      const startOffsetSeconds = acc;
+      const endOffsetSeconds = acc + phase.seconds;
+      if (elapsedSeconds < endOffsetSeconds) {
+        currentPhase = {
+          ...phase,
+          index: i + 1,
+          startOffsetSeconds,
+          endOffsetSeconds,
+          elapsedSeconds: Math.max(0, elapsedSeconds - startOffsetSeconds),
+          remainingSeconds: Math.max(0, endOffsetSeconds - elapsedSeconds)
+        };
+        break;
+      }
+      acc = endOffsetSeconds;
+    }
+
+    const t1 = normalized.durations.stage1PrewritingMinutes * 60;
+    const t2 = normalized.durations.stage2AiFeedbackMinutes * 60;
+    const t3 = normalized.durations.stage3PeerReviewMinutes * 60;
+    const t4 = normalized.durations.stage3PeerRevisionMinutes * 60;
+    let unlockedStage = 1;
+    if (normalized.running && normalized.startedAt) {
+      if (elapsedSeconds >= t1) unlockedStage = 2;
+      if (elapsedSeconds >= t1 + t2) unlockedStage = 3;
+      if (normalizeGroup(mode || 'A') === 'C') {
+        if (elapsedSeconds >= t1 + t2) unlockedStage = 4;
+      } else if (elapsedSeconds >= t1 + t2 + t3 + t4) {
+        unlockedStage = 4;
+      }
+    }
+
+    return {
+      running: normalized.running,
+      startedAt: normalized.startedAt,
+      updatedAt: normalized.updatedAt,
+      durations: normalized.durations,
+      elapsedSeconds,
+      unlockedStage,
+      phases,
+      currentPhase
+    };
+  }
+
+  function requiredElapsedSecondsForTargetStage(session, targetStage, timer) {
+    const d = timer.durations;
+    const t1 = d.stage1PrewritingMinutes * 60;
+    const t2 = d.stage2AiFeedbackMinutes * 60;
+    const t3 = d.stage3PeerReviewMinutes * 60;
+    const t4 = d.stage3PeerRevisionMinutes * 60;
+    if (targetStage <= 1) return 0;
+    if (targetStage === 2) return t1;
+    if (targetStage === 3) return t1 + t2;
+    if (targetStage >= 4) {
+      const group = normalizeGroup(session.mode || 'A');
+      if (group === 'C') return t1 + t2;
+      return t1 + t2 + t3 + t4;
+    }
+    return 0;
+  }
+
+  function formatRemaining(seconds) {
+    const remain = Math.max(0, Number(seconds || 0));
+    const min = Math.floor(remain / 60);
+    const sec = remain % 60;
+    return `${min}m ${String(sec).padStart(2, '0')}s`;
+  }
+
+  async function ensureTimerAllowsStageChange(session, targetStage) {
+    const current = Number(session.stage || 1);
+    const desired = Number(targetStage || current);
+    if (desired <= current) return;
+
+    const timer = await getTimer();
+    if (!timer.running || !timer.startedAt) {
+      throw createError(409, '愿由ъ옄媛 ??대㉧瑜??쒖옉?섍린 ?꾩뿉???ㅼ쓬 ?④퀎濡??대룞?????놁뒿?덈떎.');
+    }
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - Number(timer.startedAt || 0)) / 1000));
+    const requiredSeconds = requiredElapsedSecondsForTargetStage(session, desired, timer);
+    if (elapsedSeconds < requiredSeconds) {
+      throw createError(
+        409,
+        `?꾩쭅 ?④퀎 ?대룞 ?쒓컙???꾨떃?덈떎. ?⑥? ?쒓컙: ${formatRemaining(requiredSeconds - elapsedSeconds)}`
+      );
+    }
+  }
+
+  async function attachTimer(session) {
+    if (!session) return session;
+    const timer = await getTimer();
+    return {
+      ...session,
+      timer: buildTimerSnapshot(timer, session.mode || 'A')
+    };
+  }
 
   function normalizeId(value) {
     return String(value || '').trim();
@@ -152,11 +329,11 @@ export function createSessionService(dataStore) {
 
   async function fetchRosterStudents(forceReload = false) {
     if (!dataStore.getRoster) {
-      throw createError(500, '학생 명단 기능이 활성화되지 않았습니다.');
+      throw createError(500, '?숈깮 紐낅떒 湲곕뒫???쒖꽦?붾릺吏 ?딆븯?듬땲??');
     }
     const now = Date.now();
     if (!forceReload && rosterCache && now - rosterFetchedAt < ROSTER_CACHE_TTL) {
-      console.log('[fetchRosterStudents] 캐시 사용, 학생 수:', rosterCache.length, '매칭 수:', rosterPairingsCache.length);
+      console.log('[fetchRosterStudents] 罹먯떆 ?ъ슜, ?숈깮 ??', rosterCache.length, '留ㅼ묶 ??', rosterPairingsCache.length);
       return rosterCache;
     }
     const roster = await dataStore.getRoster();
@@ -167,8 +344,8 @@ export function createSessionService(dataStore) {
     }));
     rosterPairingsCache = normalizeRosterPairingsForCache(roster?.pairings || [], rosterCache);
     rosterFetchedAt = now;
-    console.log('[fetchRosterStudents] 로스터 새로 로드, 학생 수:', rosterCache.length, '매칭 수:', rosterPairingsCache.length);
-    console.log('[fetchRosterStudents] 매칭 목록:', rosterPairingsCache.map(p => `${p.primary.id}-${p.partner.id}`));
+    console.log('[fetchRosterStudents] 濡쒖뒪???덈줈 濡쒕뱶, ?숈깮 ??', rosterCache.length, '留ㅼ묶 ??', rosterPairingsCache.length);
+    console.log('[fetchRosterStudents] 留ㅼ묶 紐⑸줉:', rosterPairingsCache.map(p => `${p.primary.id}-${p.partner.id}`));
     return rosterCache;
   }
 
@@ -486,7 +663,7 @@ export function createSessionService(dataStore) {
     if (sessionPeerId && sessionPeerId !== sharedId) addSource(sessionPeerId, messagesA);
     if (partnerPeerId && partnerPeerId !== sharedId) addSource(partnerPeerId, messagesB);
     
-    console.log('[determineSharedPeerSessionId] 결과:', {
+    console.log('[determineSharedPeerSessionId] 寃곌낵:', {
       sessionPeerId,
       partnerPeerId,
       sharedId,
@@ -522,10 +699,10 @@ export function createSessionService(dataStore) {
   async function findExistingSessionByStudentId(studentId) {
     const target = normalizeIdForCompare(studentId);
     if (!target) return null;
-    console.log('[findExistingSessionByStudentId] 검색 대상:', studentId, '-> ', target);
+    console.log('[findExistingSessionByStudentId] 寃?????', studentId, '-> ', target);
     
     const keys = await dataStore.listSessions();
-    console.log('[findExistingSessionByStudentId] 전체 세션 키 수:', keys?.length || 0);
+    console.log('[findExistingSessionByStudentId] ?꾩껜 ?몄뀡 ????', keys?.length || 0);
     
     if (!keys?.length) return null;
     
@@ -536,26 +713,26 @@ export function createSessionService(dataStore) {
         if (!session?.you?.id) continue;
         
         const sessionUserId = normalizeIdForCompare(session.you.id);
-        console.log('[findExistingSessionByStudentId] 세션 검사:', key, session.you.id, '-> ', sessionUserId);
+        console.log('[findExistingSessionByStudentId] ?몄뀡 寃??', key, session.you.id, '-> ', sessionUserId);
         
         if (sessionUserId !== target) continue;
         
         if (!candidate) {
           candidate = session;
-          console.log('[findExistingSessionByStudentId] 첫 번째 매칭 세션:', key);
+          console.log('[findExistingSessionByStudentId] 泥?踰덉㎏ 留ㅼ묶 ?몄뀡:', key);
           continue;
         }
         const candidateUpdated = Number(candidate.updatedAt || candidate.createdAt || 0);
         const sessionUpdated = Number(session.updatedAt || session.createdAt || 0);
         if (sessionUpdated > candidateUpdated) {
           candidate = session;
-          console.log('[findExistingSessionByStudentId] 더 최신 세션으로 교체:', key);
+          console.log('[findExistingSessionByStudentId] ??理쒖떊 ?몄뀡?쇰줈 援먯껜:', key);
         }
       } catch (error) {
-        console.warn('기존 세션 조회 실패', error);
+        console.warn('湲곗〈 ?몄뀡 議고쉶 ?ㅽ뙣', error);
       }
     }
-    console.log('[findExistingSessionByStudentId] 최종 결과:', candidate ? candidate.sessionKey : 'null');
+    console.log('[findExistingSessionByStudentId] 理쒖쥌 寃곌낵:', candidate ? candidate.sessionKey : 'null');
     return candidate;
   }
 
@@ -563,21 +740,21 @@ export function createSessionService(dataStore) {
     const id = normalizeId(studentId);
     const name = normalizeName(studentName);
     if (!id) {
-      throw createError(400, '식별 번호를 입력하세요.');
+      throw createError(400, '?앸퀎 踰덊샇瑜??낅젰?섏꽭??');
     }
     if (!name) {
-      throw createError(400, '이름을 입력하세요.');
+      throw createError(400, '?대쫫???낅젰?섏꽭??');
     }
     const roster = await fetchRosterStudents();
     if (!roster.length) {
-      throw createError(403, '학생 명단이 비어 있습니다. 관리자에게 문의하세요.');
+      throw createError(403, '?숈깮 紐낅떒??鍮꾩뼱 ?덉뒿?덈떎. 愿由ъ옄?먭쾶 臾몄쓽?섏꽭??');
     }
     const matched = roster.find((student) => normalizeIdForCompare(student.id) === normalizeIdForCompare(id));
     if (!matched) {
-      throw createError(403, '등록되지 않은 식별 번호입니다. 관리자에게 문의하세요.');
+      throw createError(403, '?깅줉?섏? ?딆? ?앸퀎 踰덊샇?낅땲?? 愿由ъ옄?먭쾶 臾몄쓽?섏꽭??');
     }
     if (matched.name && normalizeName(matched.name) && normalizeName(matched.name) !== name) {
-      throw createError(403, '등록된 이름과 일치하지 않습니다. 관리자에게 문의하세요.');
+      throw createError(403, '?깅줉???대쫫怨??쇱튂?섏? ?딆뒿?덈떎. 愿由ъ옄?먭쾶 臾몄쓽?섏꽭??');
     }
     return {
       id: matched.id || id,
@@ -592,15 +769,15 @@ export function createSessionService(dataStore) {
     const id = normalizeId(partnerId);
     const name = normalizeName(partnerName);
     if (!id) {
-      throw createError(400, '동료 식별 번호를 입력하세요.');
+      throw createError(400, '?숇즺 ?앸퀎 踰덊샇瑜??낅젰?섏꽭??');
     }
     const roster = await fetchRosterStudents();
     const matched = roster.find((student) => normalizeIdForCompare(student.id) === normalizeIdForCompare(id));
     if (!matched) {
-      throw createError(404, '등록되지 않은 동료 식별 번호입니다.');
+      throw createError(404, '?깅줉?섏? ?딆? ?숇즺 ?앸퀎 踰덊샇?낅땲??');
     }
     if (matched.name && name && normalizeName(matched.name) !== name) {
-      throw createError(403, '동료 이름이 등록된 정보와 일치하지 않습니다.');
+      throw createError(403, '?숇즺 ?대쫫???깅줉???뺣낫? ?쇱튂?섏? ?딆뒿?덈떎.');
     }
     return {
       id: matched.id || id,
@@ -612,7 +789,7 @@ export function createSessionService(dataStore) {
     const normalizedGroup = normalizeGroup(group);
     const verifiedStudent = await ensureStudentAllowed(studentId, studentName);
     
-    // 로그인 시 로스터 강제 갱신
+    // 濡쒓렇????濡쒖뒪??媛뺤젣 媛깆떊
     await fetchRosterStudents(true);
     const existingSession = await findExistingSessionByStudentId(verifiedStudent.id);
     if (existingSession) {
@@ -639,7 +816,8 @@ export function createSessionService(dataStore) {
         if (!session.createdAt) session.createdAt = existingSession.createdAt || now;
         return session;
       });
-      return ensureRosterPairing(updated);
+      const paired = await ensureRosterPairing(updated);
+      return attachTimer(paired);
     }
     const now = Date.now();
     const sessionKey = uuid();
@@ -673,14 +851,15 @@ export function createSessionService(dataStore) {
       peerSessionId
     };
     const saved = await dataStore.saveSession(sessionKey, base);
-    return ensureRosterPairing(saved);
+    const paired = await ensureRosterPairing(saved);
+    return attachTimer(paired);
   }
 
   async function ensureRosterPairing(session) {
     if (!session || !session.sessionKey || !session.you?.id) {
       return session;
     }
-    console.log('[ensureRosterPairing] 세션 확인:', {
+    console.log('[ensureRosterPairing] ?몄뀡 ?뺤씤:', {
       sessionKey: session.sessionKey,
       userId: session.you?.id,
       currentPartner: session.partner?.id,
@@ -689,7 +868,7 @@ export function createSessionService(dataStore) {
     
     const pair = findRosterPairingForStudent(session.you.id);
     if (!pair) {
-      console.log('[ensureRosterPairing] 로스터에서 매칭 찾지 못함:', session.you.id);
+      console.log('[ensureRosterPairing] 濡쒖뒪?곗뿉??留ㅼ묶 李얠? 紐삵븿:', session.you.id);
       return session;
     }
     const partnerEntry = resolvePartnerEntry(pair, session.you.id) || {};
@@ -703,14 +882,14 @@ export function createSessionService(dataStore) {
       return session;
     }
 
-    console.log('[ensureRosterPairing] 매칭 찾음:', {
+    console.log('[ensureRosterPairing] 留ㅼ묶 李얠쓬:', {
       partnerEntry: partnerEntry,
       desiredPartnerId: desiredPartnerId,
       selfKey: selfKey
     });
     
     const partnerSession = await findExistingSessionByStudentId(desiredPartnerId);
-    console.log('[ensureRosterPairing] 동료 세션 검색 결과:', partnerSession ? partnerSession.sessionKey : 'null');
+    console.log('[ensureRosterPairing] ?숇즺 ?몄뀡 寃??寃곌낵:', partnerSession ? partnerSession.sessionKey : 'null');
     
     if (!partnerSession) {
       if (!currentPartnerKey) {
@@ -744,7 +923,7 @@ export function createSessionService(dataStore) {
     }
 
     const { sharedId, mergeSources } = await determineSharedPeerSessionId(session, partnerSession);
-    console.log('[ensureRosterPairing] 공유 peerSessionId:', sharedId);
+    console.log('[ensureRosterPairing] 怨듭쑀 peerSessionId:', sharedId);
     
     const partnerSnapshot = buildPartnerSnapshot(partnerSession, partnerEntry);
     const partnerPresence = buildPartnerPresence(partnerSession, partnerEntry);
@@ -782,11 +961,9 @@ export function createSessionService(dataStore) {
   async function getSessionState(sessionKey) {
     const session = await dataStore.getSession(sessionKey);
     if (!session) {
-      throw createError(404, '세션을 찾을 수 없습니다.');
+      throw createError(404, '?몄뀡??李얠쓣 ???놁뒿?덈떎.');
     }
-    // 세션 상태 조회 시마다 동료 매칭을 다시 확인하여 동료가 나중에 로그인한 경우에도 매칭되도록 함
     const updated = await ensureRosterPairing(session);
-    // 동료 세션이 있다면 동료 세션도 업데이트하여 양방향 동기화 보장
     if (updated?.partner?.sessionKey) {
       try {
         const partnerSession = await dataStore.getSession(updated.partner.sessionKey);
@@ -794,10 +971,10 @@ export function createSessionService(dataStore) {
           await ensureRosterPairing(partnerSession);
         }
       } catch (error) {
-        console.warn('동료 세션 동기화 실패', error);
+        console.warn('?숇즺 ?몄뀡 ?숆린???ㅽ뙣', error);
       }
     }
-    return updated;
+    return attachTimer(updated);
   }
 
   async function listSessions() {
@@ -825,22 +1002,37 @@ export function createSessionService(dataStore) {
 
   async function submitPrewriting(sessionKey, text) {
     const cleaned = String(text || '').trim();
-    if (!cleaned) throw createError(400, '사전 글쓰기를 입력하세요.');
-    return dataStore.updateSession(sessionKey, (session) => {
+    if (!cleaned) throw createError(400, '사전 글쓰기를 입력해주세요.');
+    let canAdvanceToStage2 = false;
+    const current = await dataStore.getSession(sessionKey);
+    if (current && Number(current.stage || 1) >= 2) {
+      canAdvanceToStage2 = true;
+    } else if (current) {
+      try {
+        await ensureTimerAllowsStageChange(current, 2);
+        canAdvanceToStage2 = true;
+      } catch (error) {
+        canAdvanceToStage2 = false;
+      }
+    }
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       ensureWriting(session);
       ensureSteps(session);
       const submittedAt = Date.now();
       session.writing.prewriting = { text: cleaned, submittedAt };
       session.steps.prewriting = { completed: true, submittedAt };
-      session.stage = Math.max(Number(session.stage || 1), 2);
+      if (canAdvanceToStage2) {
+        session.stage = Math.max(Number(session.stage || 1), 2);
+      }
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function saveDraft(sessionKey, text) {
     const cleaned = String(text || '').trim();
-    if (!cleaned) throw createError(400, '2단계 메모를 입력하세요.');
-    return dataStore.updateSession(sessionKey, (session) => {
+    if (!cleaned) throw createError(400, '2단계 메모를 입력해주세요.');
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       ensureWriting(session);
       ensureSteps(session);
       const savedAt = Date.now();
@@ -848,12 +1040,13 @@ export function createSessionService(dataStore) {
       session.steps.draft = { saved: true, savedAt };
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function savePeerNotes(sessionKey, text) {
     const cleaned = String(text || '').trim();
-    if (!cleaned) throw createError(400, '3단계 메모를 입력하세요.');
-    return dataStore.updateSession(sessionKey, (session) => {
+    if (!cleaned) throw createError(400, '3단계 메모를 입력해주세요.');
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       ensureWriting(session);
       ensureSteps(session);
       const updatedAt = Date.now();
@@ -861,12 +1054,16 @@ export function createSessionService(dataStore) {
       session.steps.notes = { saved: true, updatedAt };
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function submitFinalWriting(sessionKey, text) {
     const cleaned = String(text || '').trim();
-    if (!cleaned) throw createError(400, '최종 글을 입력하세요.');
-    return dataStore.updateSession(sessionKey, (session) => {
+    if (!cleaned) throw createError(400, '최종 글을 입력해주세요.');
+    const current = await dataStore.getSession(sessionKey);
+    if (!current) throw createError(404, '세션을 찾을 수 없습니다.');
+    await ensureTimerAllowsStageChange(current, 4);
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       ensureWriting(session);
       ensureSteps(session);
       const submittedAt = Date.now();
@@ -875,13 +1072,14 @@ export function createSessionService(dataStore) {
       session.stage = 4;
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function setPartner(sessionKey, payload = {}) {
     const { partnerSessionKey, partnerName, partnerId } = payload;
     const session = await dataStore.getSession(sessionKey);
     if (!session) {
-      throw createError(404, '세션을 찾을 수 없습니다.');
+      throw createError(404, '?몄뀡??李얠쓣 ???놁뒿?덈떎.');
     }
 
     const normalizedPartnerKey = normalizeId(partnerSessionKey);
@@ -891,7 +1089,7 @@ export function createSessionService(dataStore) {
     if (normalizedPartnerKey) {
       partnerSession = await dataStore.getSession(normalizedPartnerKey);
       if (!partnerSession) {
-        throw createError(404, '동료 세션을 찾을 수 없습니다.');
+        throw createError(404, '?숇즺 ?몄뀡??李얠쓣 ???놁뒿?덈떎.');
       }
     }
 
@@ -902,12 +1100,12 @@ export function createSessionService(dataStore) {
     }
 
     if (partnerSession && partnerSession.sessionKey === session.sessionKey) {
-      throw createError(400, '본인 세션을 동료로 지정할 수 없습니다.');
+      throw createError(400, '蹂몄씤 ?몄뀡???숇즺濡?吏?뺥븷 ???놁뒿?덈떎.');
     }
 
     if (!partnerSession) {
       if (!manualAllowed) {
-        throw createError(404, '동료 세션을 찾을 수 없습니다.');
+        throw createError(404, '?숇즺 ?몄뀡??李얠쓣 ???놁뒿?덈떎.');
       }
       const offlinePartner = {
         sessionKey: '',
@@ -932,7 +1130,7 @@ export function createSessionService(dataStore) {
         };
         return record;
       });
-      return updated;
+      return attachTimer(updated);
     }
 
     const fallbackInfo = manualAllowed || {
@@ -958,7 +1156,7 @@ export function createSessionService(dataStore) {
         return record;
       }),
       dataStore.updateSession(partnerSession.sessionKey, (record) => {
-        console.log('[ensureRosterPairing] 동료 세션 업데이트:', {
+        console.log('[ensureRosterPairing] ?숇즺 ?몄뀡 ?낅뜲?댄듃:', {
           sessionKey: partnerSession.sessionKey,
           oldPeerSessionId: record.peerSessionId,
           newPeerSessionId: sharedId
@@ -979,46 +1177,61 @@ export function createSessionService(dataStore) {
     }
 
     await Promise.all([updatePartnerMirrorPresence(updatedSession), updatePartnerMirrorPresence(updatedPartner)]);
-    return updatedSession;
+    return attachTimer(updatedSession);
   }
 
   async function clearPartner(sessionKey) {
-    return dataStore.updateSession(sessionKey, (session) => {
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       session.partner = null;
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function advanceToPeerStage(sessionKey) {
-    return dataStore.updateSession(sessionKey, (session) => {
+    const current = await dataStore.getSession(sessionKey);
+    if (!current) throw createError(404, '세션을 찾을 수 없습니다.');
+    const nextStage = computeNextStageForAdvance(current);
+    await ensureTimerAllowsStageChange(current, nextStage);
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       const nextStage = computeNextStageForAdvance(session);
       advanceStageValue(session, nextStage);
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function advanceToFinalStage(sessionKey) {
-    return dataStore.updateSession(sessionKey, (session) => {
+    const current = await dataStore.getSession(sessionKey);
+    if (!current) throw createError(404, '세션을 찾을 수 없습니다.');
+    await ensureTimerAllowsStageChange(current, 4);
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       advanceStageValue(session, 4);
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function regressStage(sessionKey) {
-    return dataStore.updateSession(sessionKey, (session) => {
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       const previous = getPreviousStage(session);
       session.stage = previous;
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function jumpToStage(sessionKey, targetStage) {
     const target = Number(targetStage);
-    if (!target || target < 1 || target > 4) throw createError(400, '유효하지 않은 단계입니다.');
-    return dataStore.updateSession(sessionKey, (session) => {
+    if (!target || target < 1 || target > 4) throw createError(400, '?좏슚?섏? ?딆? ?④퀎?낅땲??');
+    const current = await dataStore.getSession(sessionKey);
+    if (!current) throw createError(404, '세션을 찾을 수 없습니다.');
+    await ensureTimerAllowsStageChange(current, target);
+    const updated = await dataStore.updateSession(sessionKey, (session) => {
       session.stage = target;
       return session;
     });
+    return attachTimer(updated);
   }
 
   async function touchPresence(sessionKey) {
@@ -1034,7 +1247,7 @@ export function createSessionService(dataStore) {
       return session;
     });
     await updatePartnerMirrorPresence(updated);
-    return updated;
+    return attachTimer(updated);
   }
 
   async function postPresenceLeave(sessionKey, userId, userName) {
@@ -1052,7 +1265,75 @@ export function createSessionService(dataStore) {
       return session;
     });
     await updatePartnerMirrorPresence(updated);
-    return updated;
+    return attachTimer(updated);
+  }
+
+  async function getTimerState(mode = 'A') {
+    const timer = await getTimer();
+    return buildTimerSnapshot(timer, mode);
+  }
+
+  async function updateTimerConfig(payload = {}) {
+    const current = await getTimer(true);
+    const next = normalizeTimer({
+      ...current,
+      running: current.running,
+      startedAt: current.startedAt,
+      durations: {
+        ...current.durations,
+        ...(payload?.durations || payload || {})
+      },
+      updatedAt: Date.now()
+    });
+    if (typeof dataStore.saveTimer !== 'function') return next;
+    const saved = await dataStore.saveTimer(next);
+    timerCache = normalizeTimer(saved || next);
+    timerFetchedAt = Date.now();
+    return buildTimerSnapshot(timerCache, 'A');
+  }
+
+  async function startTimer() {
+    const current = await getTimer(true);
+    const started = normalizeTimer({
+      ...current,
+      running: true,
+      startedAt: Date.now(),
+      updatedAt: Date.now()
+    });
+    if (typeof dataStore.saveTimer !== 'function') return buildTimerSnapshot(started, 'A');
+    const saved = await dataStore.saveTimer(started);
+    timerCache = normalizeTimer(saved || started);
+    timerFetchedAt = Date.now();
+    return buildTimerSnapshot(timerCache, 'A');
+  }
+
+  async function stopTimer() {
+    const current = await getTimer(true);
+    const stopped = normalizeTimer({
+      ...current,
+      running: false,
+      updatedAt: Date.now()
+    });
+    if (typeof dataStore.saveTimer !== 'function') return buildTimerSnapshot(stopped, 'A');
+    const saved = await dataStore.saveTimer(stopped);
+    timerCache = normalizeTimer(saved || stopped);
+    timerFetchedAt = Date.now();
+    return buildTimerSnapshot(timerCache, 'A');
+  }
+
+  async function resetTimer() {
+    const current = await getTimer(true);
+    const reset = normalizeTimer({
+      ...current,
+      running: false,
+      startedAt: 0,
+      updatedAt: Date.now()
+    });
+    if (typeof dataStore.saveTimer !== 'function') return buildTimerSnapshot(reset, 'A');
+    const saved = await dataStore.saveTimer(reset);
+    timerCache = normalizeTimer(saved || reset);
+    timerFetchedAt = Date.now();
+    return buildTimerSnapshot(timerCache, 'A');
   }
 
   async function getPublicSettings() {
@@ -1066,11 +1347,11 @@ export function createSessionService(dataStore) {
   async function deleteSession(sessionKey) {
     const key = String(sessionKey || '').trim();
     if (!key) {
-      throw createError(400, '세션 키를 입력하세요.');
+      throw createError(400, '?몄뀡 ?ㅻ? ?낅젰?섏꽭??');
     }
     const session = await dataStore.getSession(key);
     if (!session) {
-      throw createError(404, '세션을 찾을 수 없습니다.');
+      throw createError(404, '?몄뀡??李얠쓣 ???놁뒿?덈떎.');
     }
     await dataStore.deleteSession(key, session);
     return { sessionKey: key };
@@ -1108,6 +1389,11 @@ export function createSessionService(dataStore) {
     },
     getPublicSettings,
     getServerDiag,
+    getTimerState,
+    updateTimerConfig,
+    startTimer,
+    stopTimer,
+    resetTimer,
     deleteSession,
     seedRosterSessions,
     reloadRosterCache: () => {
@@ -1117,4 +1403,5 @@ export function createSessionService(dataStore) {
     }
   };
 }
+
 

@@ -24,6 +24,19 @@ const DEFAULT_ROSTER = {
   pairings: []
 };
 
+const DEFAULT_TIMER = {
+  running: false,
+  startedAt: 0,
+  updatedAt: 0,
+  durations: {
+    stage1PrewritingMinutes: 20,
+    stage2AiFeedbackMinutes: 20,
+    stage3PeerReviewMinutes: 10,
+    stage3PeerRevisionMinutes: 15,
+    stage4FinalRevisionMinutes: 20
+  }
+};
+
 function resolveLocalPath(rootDir, relativePath) {
   return path.resolve(rootDir, relativePath);
 }
@@ -295,6 +308,24 @@ function normalizeRosterPairings(entries, students = []) {
     };
   }
 
+  async function getTimer() {
+    return readJson('settings/timer.json', DEFAULT_TIMER);
+  }
+
+  async function saveTimer(data = {}) {
+    const incomingDurations = data?.durations || {};
+    const payload = {
+      ...DEFAULT_TIMER,
+      ...data,
+      durations: {
+        ...DEFAULT_TIMER.durations,
+        ...incomingDurations
+      }
+    };
+    await writeJson('settings/timer.json', payload);
+    return payload;
+  }
+
   return {
     getSession,
     saveSession,
@@ -310,7 +341,8 @@ function normalizeRosterPairings(entries, students = []) {
     getRoster,
     saveRoster,
     deleteSession,
-    getServerDiag
+    getServerDiag,
+    getTimer,
+    saveTimer
   };
 }
-

@@ -105,6 +105,15 @@ app.get('/api/server/diag', async (req, res, next) => {
   }
 });
 
+app.get('/api/timer', async (req, res, next) => {
+  try {
+    const timer = await sessionService.getTimerState('A');
+    res.json(timer);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post('/api/session/start', async (req, res, next) => {
   try {
     const session = await sessionService.startSession(req.body || {});
@@ -287,4 +296,3 @@ app.use((err, req, res, next) => {
 app.listen(config.port, () => {
   console.log(`WritingResearch backend listening on port ${config.port}`);
 });
-

@@ -273,6 +273,51 @@ export function createAdminRouter({ adminService, sessionService, chatService })
     }
   });
 
+  router.get('/timer', async (req, res, next) => {
+    try {
+      const timer = await sessionService.getTimerState('A');
+      res.json(timer);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/timer', async (req, res, next) => {
+    try {
+      const timer = await sessionService.updateTimerConfig(req.body || {});
+      res.json(timer);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/timer/start', async (req, res, next) => {
+    try {
+      const timer = await sessionService.startTimer();
+      res.json(timer);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/timer/stop', async (req, res, next) => {
+    try {
+      const timer = await sessionService.stopTimer();
+      res.json(timer);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/timer/reset', async (req, res, next) => {
+    try {
+      const timer = await sessionService.resetTimer();
+      res.json(timer);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.post('/config', async (req, res, next) => {
     try {
       const result = await adminService.updateConfig(req.body || {});
@@ -293,4 +338,3 @@ export function createAdminRouter({ adminService, sessionService, chatService })
 
   return router;
 }
-
