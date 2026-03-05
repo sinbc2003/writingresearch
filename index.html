@@ -1147,25 +1147,25 @@
             const hasSaved = !!savedText && Number(state.writing.draft.savedAt || 0) > 0;
             const nextStage = group === 'C' ? 4 : 3;
             const timerReady = ensureTimerGateForRender(nextStage);
-            let nextLabel = '?ㅼ쓬 ?④퀎濡??대룞';
-            if (group === 'A') nextLabel = '?숇즺 ?쇰뱶諛??④퀎濡??대룞';
-            else if (group === 'C') nextLabel = '理쒖쥌 ?④퀎濡??대룞';
-            else if (group === 'B') nextLabel = 'AI ?쇰뱶諛??④퀎濡??대룞';
+            let nextLabel = '다음 단계로 이동';
+            if (group === 'A') nextLabel = '동료 피드백 단계로 이동';
+            else if (group === 'C') nextLabel = '최종 단계로 이동';
+            else if (group === 'B') nextLabel = 'AI 피드백 단계로 이동';
             moveBtn.textContent = nextLabel;
             moveBtn.disabled = !hasSaved || !timerReady;
           }
           if (titleEl) {
-            if (group === 'B') titleEl.textContent = '2?④퀎 쨌 ?숇즺 硫붾え';
-            else titleEl.textContent = '2?④퀎 쨌 湲?곌린 ?섏젙';
+            if (group === 'B') titleEl.textContent = '2단계 · 동료 메모';
+            else titleEl.textContent = '2단계 · 글쓰기 수정';
           }
           const savedAt = Number(state.writing.draft.savedAt || 0);
           if (savedAt) {
-            info.textContent = '留덉?留???? ' + formatDate(savedAt);
+            info.textContent = '마지막 저장: ' + formatDate(savedAt);
         } else {
             if (group === 'B') {
-              info.textContent = '?숇즺???쇰뱶諛깆쓣 湲곕컲?쇰줈 ?섏젙 諛⑺뼢???뺣━?????대룞?섏꽭??';
+              info.textContent = '동료 피드백을 바탕으로 수정 방향을 정리한 뒤 이동하세요.';
             } else {
-              info.textContent = 'AI ?쒗꽣?먭쾶 諛쏆? ?쇰뱶諛깆쓣 諛뷀깢?쇰줈 ?ъ쟾 湲?곌린瑜??먯쑀濡?쾶 ?섏젙?섏꽭?? ?꾨옒 李쎌뿉??異붽? ?꾩씠?붿뼱???섏젙 ?ы빆???먯쑀濡?쾶 硫붾え?섏꽭??';
+              info.textContent = 'AI 튜터에게 받은 피드백을 바탕으로 사전 글쓰기를 자유롭게 수정하세요. 아래 창에는 추가 아이디어나 수정 사항을 자유롭게 메모하세요.';
             }
           }
           const backBtn = $('btnDraftBack');
@@ -1174,10 +1174,10 @@
             const currentStage = Number(state.stage || 1);
             if (prevStage < currentStage) {
               backBtn.disabled = false;
-              backBtn.textContent = '??' + (formatStageName(prevStage) || (prevStage + '?④퀎')) + '濡??대룞';
+              backBtn.textContent = '← ' + (formatStageName(prevStage) || (prevStage + '단계')) + '로 이동';
             } else {
               backBtn.disabled = true;
-              backBtn.textContent = '?댁쟾 ?④퀎濡??대룞';
+              backBtn.textContent = '이전 단계로 이동';
             }
           }
         }
@@ -1197,18 +1197,18 @@
           if (!notesInput || !saveBtn || !nextBtn) return;
 
           if (titleEl) {
-            titleEl.textContent = '3?④퀎 쨌 湲?곌린 ?섏젙';
+            titleEl.textContent = '3단계 · 글쓰기 수정';
           }
 
           if (infoEl) {
-            infoEl.textContent = '?숇즺??湲???쎄퀬, 10遺??숈븞 ?쒓났???쇰뱶諛깆쓣 ?앷컖?대낫?몄슂. ?꾨옒 李쎌뿉??愿???꾩씠?붿뼱???섏젙 ?ы빆???먯쑀濡?쾶 硫붾え?섏꽭??';
+            infoEl.textContent = '동료의 글을 읽고, 10분 동안 제공할 피드백을 생각해보세요. 아래 창에는 관련 아이디어나 수정 사항을 자유롭게 메모하세요.';
             const memoSavedAt = Number(state.writing.notes.updatedAt || 0);
-            if (memoSavedAt) infoEl.textContent += ' 쨌 留덉?留???? ' + formatDate(memoSavedAt);
+            if (memoSavedAt) infoEl.textContent += ' · 마지막 저장: ' + formatDate(memoSavedAt);
           }
 
           if (partnerPreview) {
             const partnerText = (state.partner && state.partner.prewriting && state.partner.prewriting.text) || '';
-            partnerPreview.textContent = partnerText ? partnerText : '?숇즺 湲???꾩쭅 以鍮꾨릺吏 ?딆븯?듬땲??';
+            partnerPreview.textContent = partnerText ? partnerText : '동료 글이 아직 준비되지 않았습니다.';
           }
 
           if (state.writing.notes && state.writing.notes.text) {

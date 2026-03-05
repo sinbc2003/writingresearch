@@ -48,10 +48,9 @@ const config = {
     systemPrompt: process.env.DICTIONARY_SYSTEM_PROMPT || ''
   },
   admin: {
-    password: process.env.ADMIN_PASSWORD || '159753tt!',
+    password: process.env.ADMIN_PASSWORD || '1234',
     tokenTtl: Number(process.env.ADMIN_TOKEN_TTL || 86400) // 24시간 기본 유지
   }
 };
 
 export default config;
-

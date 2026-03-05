@@ -122,7 +122,7 @@ export function createAdminService({ config, dataStore, aiResponder }) {
   const tokenTtlMs = Math.max(60, Number(config.admin?.tokenTtl || 3600)) * 1000;
 
   function resolvePassword() {
-    return process.env.ADMIN_PASSWORD || config.admin?.password || '159753tt!';
+    return process.env.ADMIN_PASSWORD || config.admin?.password || '1234';
   }
 
   function verifyPassword(password) {
@@ -281,4 +281,3 @@ export function createAdminService({ config, dataStore, aiResponder }) {
     sanitizeRosterPairings
   };
 }
-
