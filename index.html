@@ -1061,29 +1061,29 @@
           if (target === current) return;
           const highest = getHighestUnlockedStage();
           if (target > highest) {
-            setStatus('?꾩쭅 吏꾪뻾?섏? ?딆? ?④퀎?낅땲??', 'warn');
+            setStatus('아직 진행하지 않은 단계입니다.', 'warn');
             return;
           }
           if (!canSelectStage(target)) {
-            setStatus('?대떦 ?④퀎濡??대룞?????놁뒿?덈떎.', 'warn');
+            setStatus('해당 단계로 이동할 수 없습니다.', 'warn');
             return;
           }
           if (!ensureTimerGate(target)) return;
           if (!hasGas) return;
-          if (!state.sessionKey) { setStatus('?몄뀡???앹꽦?섏? ?딆븯?듬땲??', 'error'); return; }
+          if (!state.sessionKey) { setStatus('세션이 생성되지 않았습니다.', 'error'); return; }
           if (state.stageChangePending) return;
           state.stageChangePending = true;
           updateStepIndicator();
-          const label = formatStageName(target) || (target + '?④퀎');
-          setStatus(label + '濡??대룞?섎뒗 以묒엯?덈떎...', 'info');
+          const label = formatStageName(target) || (target + '단계');
+          setStatus(label + '로 이동하는 중입니다...', 'info');
           google.script.run.withSuccessHandler(function(res){
             state.stageChangePending = false;
             if (res && typeof res.stage !== 'undefined') {
               syncSessionState(res);
-              setStatus(formatStageName(res.stage) + '濡??대룞?덉뒿?덈떎.', 'success');
+              setStatus(formatStageName(res.stage) + '로 이동했습니다.', 'success');
             } else {
               syncSessionState(res || {});
-              setStatus('?④퀎瑜?蹂寃쏀뻽?듬땲??', 'success');
+              setStatus('단계를 변경했습니다.', 'success');
             }
           }).withFailureHandler(function(err){
             state.stageChangePending = false;
